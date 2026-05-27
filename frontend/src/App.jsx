@@ -40,9 +40,7 @@ function Nav({ page, setPage }) {
   return (
     <header className="nav">
       <div className="nav-brand">
-        <div className="nav-logo">AC</div>
         <span className="nav-title">Action <strong>Planning</strong></span>
-        <span className="nav-badge">BETA 3.0</span>
       </div>
       <nav className="nav-tabs">
         {tabs.map(([id, label]) => (
