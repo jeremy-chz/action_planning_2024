@@ -48,7 +48,7 @@ async function parseExcel(file) {
     reader.onload = (e) => {
       try {
         // Import dynamique de SheetJS
-        import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs")
+        import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js")
           .then(XLSX => {
             const data = new Uint8Array(e.target.result)
             const wb   = XLSX.read(data, { type: "array" })
