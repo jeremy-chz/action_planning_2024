@@ -122,17 +122,22 @@ const analyserPhotos = async () => {
   if (photos.length === 0) return
   setScanning(true)
   setImportMsg(null)
+  console.log("Début analyse, nb photos:", photos.length)
+  console.log("API_BASE:", API_BASE)
   try {
+    console.log("Envoi à l'API...")
     const res = await fetch(`${API_BASE}/scan/analyser`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ images: photos }),
     })
+    console.log("Réponse status:", res.status)
     if (!res.ok) {
       const err = await res.json()
       throw new Error(err.detail || "Erreur analyse")
     }
     const data = await res.json()
+    console.log("Data reçue:", data)
     if (data.length === 0) {
       setImportMsg({ type: "error", text: "Aucune charrette détectée." })
     } else {
