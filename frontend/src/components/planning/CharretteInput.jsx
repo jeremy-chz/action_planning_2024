@@ -259,12 +259,20 @@ const analyserPhotos = async () => {
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <button
-            className="btn btn-primary"
-            style={{ fontSize: 15, padding: "12px 20px" }}
-            onClick={() => cameraRef.current.click()}
-          >
-            Scanner un tableau
-          </button>
+          className="btn btn-primary"
+          style={{ fontSize: 15, padding: "12px 20px" }}
+          onClick={() => cameraRef.current.click()}
+        >
+          Prendre une photo
+        </button>
+
+        <button
+          className="btn btn-ghost"
+          style={{ fontSize: 15, padding: "12px 20px" }}
+          onClick={() => galleryRef.current.click()}
+        >
+          Depuis la galerie
+        </button>
 
           {photos.length > 0 && (
             <>
