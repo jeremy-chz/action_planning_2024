@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from database import engine, Base
-from routers import personnel, planning
+from routers import personnel, planning, scan
 
 
 @asynccontextmanager
@@ -38,6 +38,7 @@ app.add_middleware(
 
 app.include_router(personnel.router, prefix="/api/personnel", tags=["Personnel"])
 app.include_router(planning.router, prefix="/api/planning", tags=["Planning"])
+app.include_router(scan.router, prefix="/api/scan", tags=["Scan"])
 
 
 @app.get("/api/health")

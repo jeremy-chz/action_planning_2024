@@ -84,16 +84,18 @@ async function parseExcel(file) {
 }
 
 // ─── Composant ───────────────────────────────────────────────────────────────
-
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
 export default function CharretteInput({ charrettes, onChange }) {
-  const [raw, setRaw]           = useState("")
   const [advanced, setAdvanced] = useState(false)
   const [dragging, setDragging] = useState(false)
+  const [photos, setPhotos]       = useState([])
+  const [scanning, setScanning]   = useState(false)
   const [importMsg, setImportMsg] = useState(null)   // { type: "success"|"error", text }
   const [form, setForm]         = useState({
     barcode: "", duration_min: 30, priorite: 2, not_before: "", competences_requises: []
   })
   const fileRef = useRef()
+  const cameraRef = useRef()
 
   // ── Saisie rapide texte ────────────────────────────────────────────────────
   const toggleComp = c => setForm(f => ({
@@ -109,22 +111,55 @@ export default function CharretteInput({ charrettes, onChange }) {
     setForm({ barcode: "", duration_min: 30, priorite: 2, not_before: "", competences_requises: [] })
   }
 
-  const parseRaw = () => {
-    const matches = [...raw.matchAll(/\(([^,)]+),\s*(\d+)(?:,\s*(\d))?(?:,\s*(\d{2}:\d{2}))?\)/g)]
-    if (!matches.length) { alert("Format invalide. Ex: (ABC123, 30) ou (XYZ, 45, 1, 08:30)"); return }
-    const nouvelles = matches.map(m => ({
-      barcode: m[1].trim(),
-      duration_min: parseInt(m[2]),
-      priorite: m[3] ? parseInt(m[3]) : 2,
-      not_before: m[4] || "",
-      competences_requises: [],
-    }))
-    onChange([...charrettes, ...nouvelles])
-    setRaw("")
-  }
-
   const remove = i => onChange(charrettes.filter((_, j) => j !== i))
   const clearAll = () => { if (confirm(`Supprimer les ${charrettes.length} charrettes ?`)) onChange([]) }
+
+  const handlePhotos = (files) => {
+  const newPhotos = []
+  let done = 0
+  Array.from(files).forEach(file => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      newPhotos.push(e.target.result)
+      done++
+      if (done === files.length) setPhotos(p => [...p, ...newPhotos])
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+const analyserPhotos = async () => {
+  if (photos.length === 0) return
+  setScanning(true)
+  setImportMsg(null)
+  try {
+    const res = await fetch(`${API_BASE}/scan/analyser`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ images: photos }),
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.detail || "Erreur analyse")
+    }
+    const data = await res.json()
+    if (data.length === 0) {
+      setImportMsg({ type: "error", text: "Aucune charrette détectée." })
+    } else {
+      onChange([...charrettes, ...data.map(d => ({
+        barcode: d.barcode,
+        duration_min: d.duration_min,
+        priorite: 2, not_before: "", competences_requises: [],
+      }))])
+      setImportMsg({ type: "success", text: `✅ ${data.length} charrette(s) extraite(s) depuis ${photos.length} photo(s)` })
+      setPhotos([])
+      setTimeout(() => setImportMsg(null), 4000)
+    }
+  } catch (err) {
+    setImportMsg({ type: "error", text: `Erreur : ${err.message}` })
+  }
+  setScanning(false)
+}
 
   // ── Import fichier ─────────────────────────────────────────────────────────
   const handleFile = async (file) => {
@@ -216,24 +251,48 @@ export default function CharretteInput({ charrettes, onChange }) {
       )}
 
 
-      {/* - Saisie rapide texte - */}
-      <div className="field">
-        <label className="input-label">Ou saisie à la main</label>
-        <div className="row" style={{ alignItems: "flex-end" }}>
-          <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-            <input
-              className="input"
-              placeholder="Ex: (ABC123, 30), (XYZ456, 45, 1), (DEF, 20, 2, 09:00)"
-              value={raw}
-              onChange={e => setRaw(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && parseRaw()}
-            />
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={parseRaw} disabled={!raw.trim()}>Ajouter</button>
+      {/* Bouton Scanner */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <button
+            className="btn btn-primary"
+            style={{ fontSize: 15, padding: "12px 20px" }}
+            onClick={() => cameraRef.current.click()}
+          >
+            Scanner un tableau
+          </button>
+
+          {photos.length > 0 && (
+            <>
+              <span style={{ color: "var(--text2)", fontSize: 13 }}>
+                {photos.length} photo{photos.length > 1 ? "s" : ""} chargée{photos.length > 1 ? "s" : ""}
+              </span>
+              <button
+                className="btn btn-primary"
+                style={{ background: "var(--green)" }}
+                onClick={analyserPhotos}
+                disabled={scanning}
+              >
+                {scanning ? <><span className="spinner" /> Analyse…</> : `Analyser ${photos.length} photo${photos.length > 1 ? "s" : ""}`}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setPhotos([])}>
+                Annuler
+              </button>
+            </>
+          )}
         </div>
-        <p style={{ fontSize: 11, color: "var(--text3)", marginTop: 4 }}>
-          Format: (code, minutes) • Optionnel: (code, min, priorité 1-3, HH:MM début au plus tôt)
+        <p style={{ fontSize: 11, color: "var(--text3)", marginTop: 6 }}>
+          Prends une ou plusieurs photos du tableau - les codes et durées sont extraits automatiquement
         </p>
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          style={{ display: "none" }}
+          onChange={e => { handlePhotos(e.target.files); e.target.value = "" }}
+        />
       </div>
 
       {/* - Ajout avancé - */}
