@@ -238,7 +238,7 @@ export default function CharretteInput({ charrettes, onChange }) {
       {/* ── Ajout avancé ── */}
       <div style={{ marginBottom: 12 }}>
         <button className="btn btn-ghost btn-sm" onClick={() => setAdvanced(!advanced)}>
-          {advanced ? "▼" : "▶"} Ajout avec options avancées
+          {advanced ? "▼" : "＋"} Ajout avec options avancées
         </button>
       </div>
 

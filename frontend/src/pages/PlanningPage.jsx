@@ -132,7 +132,7 @@ export default function PlanningPage({ onResultats }) {
         onClick={handleGenerer}
         disabled={generating}
       >
-        {generating ? <><span className="spinner" /> Génération en cours…</> : "⚡ Générer le Planning"}
+        {generating ? <><span className="spinner" /> Génération en cours…</> : "Générer le Planning"}
       </button>
 
       {modalEmploye && (
