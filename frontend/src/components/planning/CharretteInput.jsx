@@ -1,4 +1,5 @@
 import { useState, useRef } from "react"
+import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs"
 
 const COMPETENCES = ["lourd", "fragile"]
 const PRIO_LABEL  = { 1: "🔴 Urgent", 2: "🔵 Normal", 3: "⚪ Basse" }
@@ -41,40 +42,25 @@ function parseCSV(text) {
 }
 
 async function parseExcel(file) {
-  // Charger SheetJS dynamiquement (disponible via CDN dans l'index.html ou npm)
-  // On utilise l'API FileReader + SheetJS
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
-        // Import dynamique de SheetJS
-        import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs")
-          .then(XLSX => {
-            const data = new Uint8Array(e.target.result)
-            const wb   = XLSX.read(data, { type: "array" })
-            const ws   = wb.Sheets[wb.SheetNames[0]]
-            const rows = XLSX.utils.sheet_to_json(ws, { header: 1 })
-
-            const result = []
-            const errors = []
-
-            // Détecter si la première ligne est un header
-            let startIdx = 0
-            if (rows[0] && isNaN(rows[0][1])) startIdx = 1
-
-            for (let i = startIdx; i < rows.length; i++) {
-              const row = rows[i]
-              if (!row || row.length < 2) continue
-              const barcode     = String(row[0] ?? "").trim()
-              const duration_min = parseInt(row[1])
-              if (!barcode) { errors.push(`Ligne ${i + 1} : code manquant`); continue }
-              if (isNaN(duration_min) || duration_min <= 0) { errors.push(`Ligne ${i + 1} : durée invalide`); continue }
-              result.push({ barcode, duration_min, priorite: 2, not_before: "", competences_requises: [] })
-            }
-            resolve({ rows: result, errors })
-          })
-          .catch(reject)
-      } catch (err) {
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type: "array" })
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 })
+        const result = [], errors = []
+        let startIdx = rows[0] && isNaN(rows[0][1]) ? 1 : 0
+        for (let i = startIdx; i < rows.length; i++) {
+          const row = rows[i]
+          if (!row || row.length < 2) continue
+          const barcode = String(row[0] ?? "").trim()
+          const duration_min = parseInt(row[1])
+          if (!barcode) { errors.push(`Ligne ${i+1} : code manquant`); continue }
+          if (isNaN(duration_min) || duration_min <= 0) { errors.push(`Ligne ${i+1} : durée invalide`); continue }
+          result.push({ barcode, duration_min, priorite: 2, not_before: "", competences_requises: [] })
+        }
+        resolve({ rows: result, errors })
+      } catch(err) {
         reject(err)
       }
     }
