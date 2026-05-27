@@ -1,4 +1,4 @@
-const BASE = "http://localhost:8000/api"
+const BASE = "https://action-planning-api.onrender.com/api"
 
 export async function fetchPersonnel() {
   const res = await fetch(`${BASE}/personnel/`)
