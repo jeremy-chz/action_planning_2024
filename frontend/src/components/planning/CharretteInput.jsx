@@ -288,7 +288,6 @@ const analyserPhotos = async () => {
           ref={cameraRef}
           type="file"
           accept="image/*"
-          capture="environment"
           multiple
           style={{ display: "none" }}
           onChange={e => { handlePhotos(e.target.files); e.target.value = "" }}
