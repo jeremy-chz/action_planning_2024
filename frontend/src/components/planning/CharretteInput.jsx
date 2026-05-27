@@ -114,17 +114,21 @@ export default function CharretteInput({ charrettes, onChange }) {
   const remove = i => onChange(charrettes.filter((_, j) => j !== i))
   const clearAll = () => { if (confirm(`Supprimer les ${charrettes.length} charrettes ?`)) onChange([]) }
 
-  const handlePhotos = (files) => {
-  const newPhotos = []
-  let done = 0
-  Array.from(files).forEach(file => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      newPhotos.push(e.target.result)
-      done++
-      if (done === files.length) setPhotos(p => [...p, ...newPhotos])
-    }
-    reader.readAsDataURL(file)
+const handlePhotos = (files) => {
+  if (!files || files.length === 0) return
+  const promises = Array.from(files).map(file => {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (e) => resolve(e.target.result)
+      reader.readAsDataURL(file)
+    })
+  })
+  Promise.all(promises).then(newPhotos => {
+    setPhotos(p => {
+      const updated = [...p, ...newPhotos]
+      console.log("Photos chargées:", updated.length)
+      return updated
+    })
   })
 }
 

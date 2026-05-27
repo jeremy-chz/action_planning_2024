@@ -42,7 +42,7 @@ export default function EmployeModal({ employe, onValider, onClose }) {
           {/* Créneaux */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <span className="input-label" style={{ margin: 0 }}>🕐 Créneaux de travail</span>
+              <span className="input-label" style={{ margin: 0 }}>Créneaux de travail</span>
               <button className="btn btn-ghost btn-sm" onClick={addCreneau}>＋ Créneau</button>
             </div>
             {creneaux.map((cr, i) => (
