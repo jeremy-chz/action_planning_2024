@@ -173,7 +173,7 @@ export default function CharretteInput({ charrettes, onChange }) {
   return (
     <div>
 
-      {/* ── Zone drag & drop ── */}
+      {/* - Zone drag & drop - */}
       <div
         onDrop={onDrop}
         onDragOver={onDragOver}
@@ -215,9 +215,10 @@ export default function CharretteInput({ charrettes, onChange }) {
         </div>
       )}
 
-      {/* ── Saisie rapide texte ── */}
+
+      {/* - Saisie rapide texte - */}
       <div className="field">
-        <label className="input-label">Ou saisie rapide (code, durée)</label>
+        <label className="input-label">Ou saisie à la main</label>
         <div className="row" style={{ alignItems: "flex-end" }}>
           <div className="field" style={{ flex: 1, marginBottom: 0 }}>
             <input
@@ -235,7 +236,7 @@ export default function CharretteInput({ charrettes, onChange }) {
         </p>
       </div>
 
-      {/* ── Ajout avancé ── */}
+      {/* - Ajout avancé - */}
       <div style={{ marginBottom: 12 }}>
         <button className="btn btn-ghost btn-sm" onClick={() => setAdvanced(!advanced)}>
           {advanced ? "▼" : "＋"} Ajout avec options avancées
@@ -287,7 +288,7 @@ export default function CharretteInput({ charrettes, onChange }) {
         </div>
       )}
 
-      {/* ── Liste des charrettes ── */}
+      {/* - Liste des charrettes - */}
       {charrettes.length > 0 && (
         <div>
           <div className="card-title" style={{ marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -306,7 +307,7 @@ export default function CharretteInput({ charrettes, onChange }) {
                   <span style={{ color: "var(--text2)", fontSize: 12 }}>{c.duration_min} min</span>
                   <span className={`badge ${PRIO_CLASS[c.priorite]}`}>{PRIO_LABEL[c.priorite]}</span>
                   {c.not_before && (
-                    <span className="badge" style={{ background: "rgba(139,92,246,0.1)", color: "#a78bfa" }}>⏰ {c.not_before}</span>
+                    <span className="badge" style={{ background: "rgba(139,92,246,0.1)", color: "#a78bfa" }}>{c.not_before}</span>
                   )}
                   {c.competences_requises?.map(comp => (
                     <span key={comp} className="badge badge-partial">{comp}</span>

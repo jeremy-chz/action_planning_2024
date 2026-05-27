@@ -62,7 +62,6 @@ export default function PlanningPage({ onResultats }) {
     <div>
       <div className="section-header" style={{ marginTop: 32 }}>
         <h1 className="section-title">Générer un Planning</h1>
-        <p className="section-sub">Configurez les charrettes et les employés présents aujourd'hui</p>
       </div>
 
       {/* Charrettes */}
