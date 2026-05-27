@@ -65,7 +65,7 @@ export default function PersonnelPage() {
         <p className="section-sub">Gérez la liste des employés disponibles pour le planning</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }}>
         {/* Formulaire ajout */}
         <div className="card">
           <div className="card-title">Ajouter un employé</div>
