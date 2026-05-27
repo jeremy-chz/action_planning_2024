@@ -304,6 +304,14 @@ const analyserPhotos = async () => {
           style={{ display: "none" }}
           onChange={e => { handlePhotos(e.target.files); e.target.value = "" }}
         />
+        <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: "none" }}
+        onChange={e => { handlePhotos(e.target.files); e.target.value = "" }}
+      />
       </div>
 
       {/* - Ajout avancé - */}
