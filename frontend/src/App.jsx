@@ -66,17 +66,15 @@ export default function App() {
 
 function Nav({ page, setPage, magasin, onLogout }) {
   const tabs = [
-    ["planning", "⚡ Générer"],
-    ["personnel", "👥 Personnel"],
-    ["resultats", "📋 Résultats"],
+    ["planning", "Générer"],
+    ["personnel", "Personnel"],
+    ["resultats", "Résultats"],
     ...(magasin.is_admin ? [["admin", "⚙️ Admin"]] : []),
   ]
   return (
     <header className="nav">
       <div className="nav-brand">
-        <div className="nav-logo">AC</div>
         <span className="nav-title">Action <strong>Planning</strong></span>
-        <span className="nav-badge">BETA 3.0</span>
       </div>
       <nav className="nav-tabs">
         {tabs.map(([id, label]) => (
