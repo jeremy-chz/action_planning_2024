@@ -1,29 +1,68 @@
 import { useState } from "react"
+import { updateTemplate } from "../../utils/api"
 
-const COMPETENCES_DISPONIBLES = ["lourd", "fragile"]
+const COMPETENCES = ["lourd", "fragile"]
 
 export default function EmployeModal({ employe, onValider, onClose }) {
-  const [creneaux, setCreneaux] = useState([{ debut: "07:00", fin: "15:00" }])
-  const [pauses, setPauses] = useState([])
-  const [competences, setCompetences] = useState([])
-  const [chargeMax, setChargeMax] = useState(480)
+  const template = employe // employe contient déjà contrat, matin_debut, etc.
 
-  const addCreneau = () => setCreneaux(c => [...c, { debut: "07:00", fin: "15:00" }])
-  const removeCreneau = i => setCreneaux(c => c.filter((_, j) => j !== i))
-  const updateCreneau = (i, field, val) => setCreneaux(c => c.map((cr, j) => j === i ? { ...cr, [field]: val } : cr))
+  const [contrat, setContrat]           = useState(template.contrat || "")
+  const [typeJournee, setTypeJournee]   = useState("")
+  const [debut, setDebut]               = useState("")
+  const [fin, setFin]                   = useState("")
+  const [pauses, setPauses]             = useState([])
+  const [competences, setCompetences]   = useState([])
+  const [chargeMax, setChargeMax]       = useState(480)
+  const [savingTemplate, setSavingTemplate] = useState(false)
+
+  // Quand on coche matin/aprem → pré-remplir les horaires du template
+  const handleTypeJournee = (type) => {
+    setTypeJournee(type)
+    if (type === "matin") {
+      setDebut(template.matin_debut || "")
+      setFin(template.matin_fin || "")
+    } else {
+      setDebut(template.aprem_debut || "")
+      setFin(template.aprem_fin || "")
+    }
+  }
 
   const addPause = () => setPauses(p => [...p, { debut: "10:00", duree: "15" }])
   const removePause = i => setPauses(p => p.filter((_, j) => j !== i))
   const updatePause = (i, field, val) => setPauses(p => p.map((pa, j) => j === i ? { ...pa, [field]: val } : pa))
-
   const toggleComp = c => setCompetences(cs => cs.includes(c) ? cs.filter(x => x !== c) : [...cs, c])
 
-  const valider = () => {
-    if (creneaux.length === 0) { alert("Ajoutez au moins un créneau de travail."); return }
+  const handleSaveTemplate = async () => {
+    setSavingTemplate(true)
+    try {
+      const data = {
+        nom:    employe.nom,
+        poste:  employe.poste,
+        contrat,
+        matin_debut: typeJournee === "matin" ? debut : template.matin_debut,
+        matin_fin:   typeJournee === "matin" ? fin   : template.matin_fin,
+        aprem_debut: typeJournee === "aprem" ? debut : template.aprem_debut,
+        aprem_fin:   typeJournee === "aprem" ? fin   : template.aprem_fin,
+      }
+      await updateTemplate(employe.id, data)
+      alert("Template sauvegardé !")
+    } catch (e) {
+      alert(e.message)
+    }
+    setSavingTemplate(false)
+  }
+
+  const handleValider = () => {
+    if (!contrat)      { alert("Sélectionne un contrat (30h ou 35h)"); return }
+    if (!typeJournee)  { alert("Sélectionne matin ou après-midi"); return }
+    if (!debut || !fin){ alert("Renseigne les horaires"); return }
+
     const config = {
-      nom: employe.nom,
-      creneaux: creneaux.map(c => [c.debut, c.fin]),
-      pauses: pauses.map(p => [p.debut, p.duree]),
+      nom:          employe.nom,
+      contrat,
+      type_journee: typeJournee,
+      creneaux:     [[debut, fin]],
+      pauses:       pauses.map(p => [p.debut, p.duree]),
       competences,
       charge_max_min: chargeMax,
     }
@@ -39,42 +78,62 @@ export default function EmployeModal({ employe, onValider, onClose }) {
         </div>
         <div className="modal-body">
 
-          {/* Créneaux */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <span className="input-label" style={{ margin: 0 }}>Créneaux de travail</span>
-              <button className="btn btn-ghost btn-sm" onClick={addCreneau}>＋ Créneau</button>
-            </div>
-            {creneaux.map((cr, i) => (
-              <div key={i} className="row" style={{ marginBottom: 8 }}>
-                <div className="field" style={{ flex: "0 0 auto" }}>
-                  <label className="input-label">De</label>
-                  <input type="time" className="input" style={{ width: 130 }} value={cr.debut}
-                    onChange={e => updateCreneau(i, "debut", e.target.value)} />
+          {/* Contrat */}
+          <div className="field">
+            <label className="input-label">Contrat</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              {["30h", "35h"].map(c => (
+                <div key={c} className={`chip ${contrat === c ? "active" : ""}`}
+                  onClick={() => setContrat(c)}
+                  style={{ flex: 1, justifyContent: "center", padding: "10px" }}>
+                  {c}
                 </div>
-                <div className="field" style={{ flex: "0 0 auto" }}>
-                  <label className="input-label">À</label>
-                  <input type="time" className="input" style={{ width: 130 }} value={cr.fin}
-                    onChange={e => updateCreneau(i, "fin", e.target.value)} />
-                </div>
-                {creneaux.length > 1 && (
-                  <button className="btn btn-danger btn-sm" style={{ marginTop: 22 }}
-                    onClick={() => removeCreneau(i)}>✕</button>
-                )}
-              </div>
-            ))}
-            <div className="alert alert-info" style={{ marginTop: 8, fontSize: 12 }}>
-              La coupure 8h–9h sera ajoutée automatiquement si le créneau la chevauche.
+              ))}
             </div>
           </div>
 
+          {/* Matin / Après-midi */}
+          <div className="field">
+            <label className="input-label">Type de journée</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              {[["matin", "Matin"], ["aprem", "Après-midi"]].map(([val, label]) => (
+                <div key={val} className={`chip ${typeJournee === val ? "active" : ""}`}
+                  onClick={() => handleTypeJournee(val)}
+                  style={{ flex: 1, justifyContent: "center", padding: "10px" }}>
+                  {label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Horaires */}
+          <div className="row">
+            <div className="field">
+              <label className="input-label">Début</label>
+              <input type="time" className="input" value={debut}
+                onChange={e => setDebut(e.target.value)} />
+            </div>
+            <div className="field">
+              <label className="input-label">Fin</label>
+              <input type="time" className="input" value={fin}
+                onChange={e => setFin(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Info pauses auto */}
+          {contrat && typeJournee && (
+            <div className="alert alert-info" style={{ marginBottom: 16, fontSize: 12 }}>
+              Les pauses seront calculées automatiquement selon le contrat {contrat} {typeJournee === "matin" ? "matin" : "après-midi"}.
+            </div>
+          )}
+
           <hr className="divider" />
 
-          {/* Pauses manuelles */}
+          {/* Pauses manuelles supplémentaires */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <span className="input-label" style={{ margin: 0 }}>Pauses manuelles</span>
-              <button className="btn btn-ghost btn-sm" onClick={addPause}>＋ Pause</button>
+              <span className="input-label" style={{ margin: 0 }}>Pauses manuelles supplémentaires</span>
+              <button className="btn btn-ghost btn-sm" onClick={addPause}>＋</button>
             </div>
             {pauses.length === 0 && <p className="pool-empty">Aucune pause manuelle</p>}
             {pauses.map((pa, i) => (
@@ -93,7 +152,6 @@ export default function EmployeModal({ employe, onValider, onClose }) {
                     <option value="20">20 min</option>
                     <option value="30">30 min</option>
                     <option value="45">45 min</option>
-                    <option value="60">60 min</option>
                   </select>
                 </div>
                 <button className="btn btn-danger btn-sm" style={{ marginTop: 22 }}
@@ -108,35 +166,32 @@ export default function EmployeModal({ employe, onValider, onClose }) {
           <div style={{ marginBottom: 20 }}>
             <label className="input-label">Compétences</label>
             <div className="chips">
-              {COMPETENCES_DISPONIBLES.map(c => (
+              {COMPETENCES.map(c => (
                 <div key={c} className={`chip ${competences.includes(c) ? "active" : ""}`}
-                  onClick={() => toggleComp(c)}>
-                  {c}
-                </div>
+                  onClick={() => toggleComp(c)}>{c}</div>
               ))}
             </div>
-            <p style={{ fontSize: 11, color: "var(--text3)", marginTop: 6 }}>
-              Les tâches marquées avec une compétence requise ne seront assignées qu'aux employés qualifiés.
-            </p>
           </div>
 
           <hr className="divider" />
 
           {/* Charge max */}
           <div>
-            <label className="input-label">Charge max journalière : <strong style={{ color: "var(--text)" }}>{chargeMax} min ({(chargeMax/60).toFixed(1)}h)</strong></label>
+            <label className="input-label">
+              ⏱ Charge max : <strong style={{ color: "var(--text)" }}>{chargeMax} min ({(chargeMax/60).toFixed(1)}h)</strong>
+            </label>
             <input type="range" min={60} max={600} step={30} value={chargeMax}
               onChange={e => setChargeMax(Number(e.target.value))}
               style={{ width: "100%", accentColor: "var(--blue)" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text3)" }}>
-              <span>1h</span><span>5h</span><span>10h</span>
-            </div>
           </div>
 
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
-          <button className="btn btn-primary" onClick={valider}>✓ Valider et ajouter</button>
+          <button className="btn btn-ghost" onClick={handleSaveTemplate} disabled={savingTemplate}>
+            {savingTemplate ? <span className="spinner" /> : "Sauvegarder template"}
+          </button>
+          <button className="btn btn-primary" onClick={handleValider}>✓ Valider pour aujourd'hui</button>
         </div>
       </div>
     </div>

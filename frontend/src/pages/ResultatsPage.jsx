@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-function EmployeCard({ nom, taches }) {
+function EmployeCard({ nom, taches, stats }) {
   const workTaches = taches.filter(t => t.type.includes("WORK"))
   const totalMin   = workTaches.reduce((s, t) => s + t.tache_duree, 0)
   const [open, setOpen] = useState(true)
@@ -10,7 +10,18 @@ function EmployeCard({ nom, taches }) {
       <div className="employe-header" onClick={() => setOpen(o => !o)} style={{ cursor: "pointer" }}>
         <div>
           <div className="employe-name">{nom}</div>
-          <div className="employe-stats">{workTaches.length} tâches · {totalMin.toFixed(0)} min de travail</div>
+          <div className="employe-stats">
+          {workTaches.length} tâches · {totalMin.toFixed(0)} min de travail
+          {stats?.par_employe?.[nom]?.delta_arrondi !== undefined && (
+            <span style={{
+              marginLeft: 8,
+              color: stats.par_employe[nom].delta_arrondi >= 0 ? "var(--green)" : "var(--red-light)",
+              fontSize: 11,
+            }}>
+              {stats.par_employe[nom].delta_arrondi >= 0 ? "+" : ""}{stats.par_employe[nom].delta_arrondi} min arrondi
+            </span>
+          )}
+        </div>
         </div>
         <span style={{ color: "var(--text3)", fontSize: 18 }}>{open ? "▼" : "▶"}</span>
       </div>
@@ -161,7 +172,7 @@ export default function ResultatsPage({ data, onBack }) {
       {/* Planning par employé */}
       <div className="planning-grid">
         {Object.entries(parEmploye).map(([nom, taches]) => (
-          <EmployeCard key={nom} nom={nom} taches={taches} />
+          <EmployeCard key={nom} nom={nom} taches={taches} stats={data.stats} />
         ))}
       </div>
 

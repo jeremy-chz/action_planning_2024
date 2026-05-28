@@ -111,3 +111,12 @@ export async function deleteMagasin(id) {
   if (!res.ok) throw new Error("Erreur suppression magasin")
   return res.json()
 }
+
+export async function updateTemplate(id, templateData) {
+  const res = await fetch(`${BASE}/personnel/${id}`, {
+    method: "PUT", headers: authHeaders(),
+    body: JSON.stringify(templateData),
+  })
+  if (!res.ok) throw new Error("Erreur mise à jour template")
+  return res.json()
+}
