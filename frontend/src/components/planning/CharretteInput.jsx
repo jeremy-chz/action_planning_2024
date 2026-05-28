@@ -240,7 +240,7 @@ const analyserPhotos = async () => {
           )}
         </div>
         <p style={{ fontSize: 11, color: "var(--text3)", marginTop: 6 }}>
-          Prends une ou plusieurs photos du tableau - les codes et durées sont extraits automatiquement
+          Prends une ou plusieurs photos du tableau de TIME
         </p>
         <input
           ref={cameraRef}

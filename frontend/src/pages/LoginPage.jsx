@@ -35,7 +35,7 @@ export default function LoginPage({ onLogin }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontWeight: 900, fontSize: 20, color: "#fff",
           }}>AC</div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5 }}>Action Planning</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5 }}>Planning</h1>
           <p style={{ color: "var(--text3)", fontSize: 13, marginTop: 4 }}>Connectez-vous à votre magasin</p>
         </div>
 
@@ -44,7 +44,7 @@ export default function LoginPage({ onLogin }) {
             <label className="input-label">Identifiant magasin</label>
             <input
               className="input"
-              placeholder="ex: action-voiron"
+              placeholder="login"
               value={loginStr}
               onChange={e => setLoginStr(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleLogin()}
