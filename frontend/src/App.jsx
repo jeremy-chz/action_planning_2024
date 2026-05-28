@@ -75,12 +75,16 @@ function Nav({ page, setPage, magasin, onLogout }) {
     <header className="nav" style={{ height: "auto", flexDirection: "column", padding: "10px 16px", gap: 8 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
         <div className="nav-brand">
-          <div className="nav-logo">AC</div>
-        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 12, color: "var(--text3)" }}>{magasin.nom}</span>
           <button className="btn btn-ghost btn-sm" onClick={onLogout} style={{ fontSize: 11 }}>Déconnexion</button>
+        </div>  
+          
+          
+        
+        
         </div>
+          <div className="nav-logo">AC</div>
       </div>
       <nav className="nav-tabs" style={{ width: "100%", justifyContent: "flex-start" }}>
         {tabs.map(([id, label]) => (
