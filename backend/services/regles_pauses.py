@@ -14,7 +14,7 @@ PAUSE_30H_MATIN = {
 # ─── 30h Après-midi ───────────────────────────────────────────────────────────
 PAUSE_30H_APREM = {
     "duree":          30,
-    "cascade_debut":  14.5,  # 14h30 pour le 1er employé
+    "cascade_debut":  15.5,  # 14h30 pour le 1er employé
     "cascade_ecart":  0.5,   # 30 min entre chaque employé
 }
 
