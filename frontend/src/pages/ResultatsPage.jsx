@@ -115,7 +115,7 @@ export default function ResultatsPage({ data, onBack }) {
       {/* Avertissements */}
       {avertissements.length > 0 && (
         <div className="alert alert-warning" style={{ marginBottom: 16, flexDirection: "column", gap: 6 }}>
-          <strong>⚠️ Avertissements ({avertissements.length})</strong>
+          <strong>Avertissements ({avertissements.length})</strong>
           {avertissements.map((a, i) => <div key={i} style={{ fontSize: 12 }}>• {a}</div>)}
         </div>
       )}
@@ -123,7 +123,7 @@ export default function ResultatsPage({ data, onBack }) {
       {/* Non assignées */}
       {non_assignees.length > 0 && (
         <div className="alert alert-danger" style={{ marginBottom: 16, flexDirection: "column", gap: 6 }}>
-          <strong>❌ {non_assignees.length} charrette(s) non assignée(s)</strong>
+          <strong>{non_assignees.length} charrette(s) non assignée(s)</strong>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
             {non_assignees.map(b => (
               <span key={b} className="badge badge-pause" style={{ fontSize: 12 }}>{b}</span>
