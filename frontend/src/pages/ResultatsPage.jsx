@@ -23,10 +23,10 @@ function EmployeCard({ nom, taches, stats }) {
           {stats?.par_employe?.[nom]?.delta_arrondi !== undefined && (
             <span style={{
               marginLeft: 8,
-              color: stats.par_employe[nom].delta_arrondi >= 0 ? "var(--green)" : "var(--red-light)",
+              color: stats.par_employe[nom].delta_arrondi >= 0 ? "var(--red-light)" : "var(--green)",
               fontSize: 11,
             }}>
-              {stats.par_employe[nom].delta_arrondi >= 0 ? "+" : ""}{stats.par_employe[nom].delta_arrondi} min arrondi
+              {stats.par_employe[nom].delta_arrondi >= 0 ? "+" : ""}{stats.par_employe[nom].delta_arrondi} min de Mise en rayon par rapport à son TIME
             </span>
           )}
         </div>
