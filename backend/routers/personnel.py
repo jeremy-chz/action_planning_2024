@@ -23,7 +23,16 @@ def create_personnel(
     db: Session = Depends(get_db),
     magasin: Magasin = Depends(get_current_magasin)
 ):
-    employe = Personnel(nom=data.nom, poste=data.poste, magasin_id=magasin.id)
+    employe = Personnel(
+        nom=data.nom,
+        poste=data.poste,
+        magasin_id=magasin.id,
+        contrat=data.contrat,
+        matin_debut=data.matin_debut,
+        matin_fin=data.matin_fin,
+        aprem_debut=data.aprem_debut,
+        aprem_fin=data.aprem_fin,
+    )
     db.add(employe)
     db.commit()
     db.refresh(employe)
@@ -39,8 +48,13 @@ def update_personnel(
     employe = db.query(Personnel).filter(Personnel.id == id, Personnel.magasin_id == magasin.id).first()
     if not employe:
         raise HTTPException(status_code=404, detail="Employé non trouvé")
-    employe.nom = data.nom
-    employe.poste = data.poste
+    employe.nom         = data.nom
+    employe.poste       = data.poste
+    employe.contrat     = data.contrat
+    employe.matin_debut = data.matin_debut
+    employe.matin_fin   = data.matin_fin
+    employe.aprem_debut = data.aprem_debut
+    employe.aprem_fin   = data.aprem_fin
     db.commit()
     db.refresh(employe)
     return employe

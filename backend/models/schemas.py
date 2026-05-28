@@ -5,15 +5,25 @@ from datetime import datetime
 
 # ─── Personnel ────────────────────────────────────────────────────────────────
 class PersonnelCreate(BaseModel):
-    nom: str = Field(..., min_length=1, max_length=100)
-    poste: Optional[str] = None
+    nom:         str = Field(..., min_length=1, max_length=100)
+    poste:       Optional[str] = None
+    contrat:     Optional[str] = None   # "30h" ou "35h"
+    matin_debut: Optional[str] = None
+    matin_fin:   Optional[str] = None
+    aprem_debut: Optional[str] = None
+    aprem_fin:   Optional[str] = None
 
 
 class PersonnelResponse(BaseModel):
-    id: int
-    nom: str
-    poste: Optional[str] = None
-    created_at: Optional[datetime] = None
+    id:          int
+    nom:         str
+    poste:       Optional[str] = None
+    magasin_id:  Optional[int] = None
+    contrat:     Optional[str] = None
+    matin_debut: Optional[str] = None
+    matin_fin:   Optional[str] = None
+    aprem_debut: Optional[str] = None
+    aprem_fin:   Optional[str] = None
 
     class Config:
         from_attributes = True

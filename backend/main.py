@@ -19,6 +19,11 @@ async def lifespan(app: FastAPI):
     try:
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE personnel ADD COLUMN IF NOT EXISTS magasin_id INTEGER"))
+            conn.execute(text("ALTER TABLE personnel ADD COLUMN IF NOT EXISTS contrat VARCHAR(10)"))
+            conn.execute(text("ALTER TABLE personnel ADD COLUMN IF NOT EXISTS matin_debut VARCHAR(5)"))
+            conn.execute(text("ALTER TABLE personnel ADD COLUMN IF NOT EXISTS matin_fin VARCHAR(5)"))
+            conn.execute(text("ALTER TABLE personnel ADD COLUMN IF NOT EXISTS aprem_debut VARCHAR(5)"))
+            conn.execute(text("ALTER TABLE personnel ADD COLUMN IF NOT EXISTS aprem_fin VARCHAR(5)"))
             conn.commit()
     except Exception as e:
         print(f"Migration info: {e}")
@@ -68,6 +73,7 @@ app.include_router(admin.router,     prefix="/api/admin",     tags=["Admin"])
 app.include_router(personnel.router, prefix="/api/personnel", tags=["Personnel"])
 app.include_router(planning.router, prefix="/api/planning", tags=["Planning"])
 app.include_router(scan.router, prefix="/api/scan", tags=["Scan"])
+
 
 
 @app.get("/api/health")
