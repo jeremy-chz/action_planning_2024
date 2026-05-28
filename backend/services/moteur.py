@@ -37,19 +37,13 @@ def calculer_pauses_auto(contrat: str, type_journee: str, heure_fin: float, inde
     pauses = []
 
     if contrat == "30h":
-        if type_journee == "matin":
-            r = PAUSE_30H_MATIN
-            pauses.append((r["debut"], r["fin"]))
-        else:  # aprem
+        if type_journee == "aprem":
             r = PAUSE_30H_APREM
             debut = r["cascade_debut"] + index_cascade * r["cascade_ecart"]
             pauses.append((debut, debut + r["duree"] / 60))
 
     elif contrat == "35h":
         if type_journee == "matin":
-            # Grosse pause fixe
-            r = PAUSE_35H_MATIN_GROSSE
-            pauses.append((r["debut"], r["fin"]))
             # Petite pause ~45min avant la fin
             r2 = PAUSE_35H_MATIN_PETITE
             debut_petite = heure_fin - r2["avant_fin"] + index_cascade * r2["cascade_ecart"]
