@@ -23,7 +23,7 @@ async def analyser_photos(payload: ImagePayload):
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY non configurée")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
     # Construire le contenu : toutes les images + le prompt
     parts = []
