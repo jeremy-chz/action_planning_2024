@@ -73,14 +73,12 @@ async function parseExcel(file) {
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
 export default function CharretteInput({ charrettes, onChange }) {
   const [advanced, setAdvanced] = useState(false)
-  const [dragging, setDragging] = useState(false)
   const [photos, setPhotos]       = useState([])
   const [scanning, setScanning]   = useState(false)
   const [importMsg, setImportMsg] = useState(null)   // { type: "success"|"error", text }
   const [form, setForm]         = useState({
     barcode: "", duration_min: 30, priorite: 2, not_before: "", competences_requises: []
   })
-  const fileRef = useRef()
   const cameraRef = useRef()
 
   // ── Saisie rapide texte ────────────────────────────────────────────────────
@@ -202,41 +200,6 @@ const analyserPhotos = async () => {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div>
-
-      {/* - Zone drag & drop - */}
-      <div
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onClick={() => fileRef.current.click()}
-        style={{
-          border: `2px dashed ${dragging ? "var(--blue)" : "var(--border2)"}`,
-          borderRadius: 10,
-          padding: "22px 20px",
-          textAlign: "center",
-          cursor: "pointer",
-          background: dragging ? "rgba(37,99,235,0.06)" : "var(--bg3)",
-          transition: "all 0.15s",
-          marginBottom: 16,
-        }}
-      >
-        <div style={{ fontSize: 28, marginBottom: 6 }}>📂</div>
-        <div style={{ fontWeight: 600, fontSize: 14, color: dragging ? "var(--blue-light)" : "var(--text2)" }}>
-          Glisser un fichier Excel ou CSV ici
-        </div>
-        <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 4 }}>
-          ou <span style={{ color: "var(--blue-light)", textDecoration: "underline" }}>cliquer pour parcourir</span>
-          {" "}— Col. A : code charrette · Col. B : durée (min)
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".csv,.xlsx,.xls,.txt"
-          style={{ display: "none" }}
-          onChange={e => { handleFile(e.target.files[0]); e.target.value = "" }}
-        />
-      </div>
-
       {/* Message import */}
       {importMsg && (
         <div className={`alert alert-${importMsg.type === "success" ? "success" : importMsg.type === "warning" ? "warning" : "danger"}`}
