@@ -76,8 +76,6 @@ function Nav({ page, setPage, magasin, onLogout }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
         <div className="nav-brand">
           <div className="nav-logo">AC</div>
-          <span className="nav-title">Action <strong>Planning</strong></span>
-          <span className="nav-badge">BETA 3.0</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 12, color: "var(--text3)" }}>{magasin.nom}</span>
