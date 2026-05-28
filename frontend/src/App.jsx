@@ -20,7 +20,7 @@ useEffect(() => {
       .then(me => {
         setMagasinState(me)
         setMagasin(me)
-        setPage(me.is_admin ? "admin" : "planning")  // ← ajouter cette ligne
+        setPage(me.is_admin ? "admin" : "planning")
       })
       .catch(() => { removeToken(); setMagasinState(null) })
       .finally(() => setChecking(false))
@@ -29,7 +29,10 @@ useEffect(() => {
   }
 }, [])
 
-  const handleLogin = (m) => { setMagasinState(m) }
+  const handleLogin = (m) => {
+  setMagasinState(m)
+  setPage(m.is_admin ? "admin" : "planning")
+}
 
   const handleLogout = () => {
     removeToken()
