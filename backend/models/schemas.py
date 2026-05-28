@@ -39,11 +39,13 @@ class Charrette(BaseModel):
 
 
 class ConfigEmploye(BaseModel):
-    nom: str
-    creneaux: List[Tuple[str, str]]
-    pauses: List[Tuple[str, str]] = []
-    competences: List[str] = []
-    charge_max_min: Optional[int] = Field(default=480, description="Charge max en minutes (défaut 8h)")
+    nom:      str
+    contrat:  Optional[str] = None   # "30h" ou "35h"
+    type_journee: Optional[str] = None  # "matin" ou "aprem"
+    creneaux: List[Tuple[str, str]] = []
+    pauses:   List[Tuple[str, str]] = []
+    competences:    List[str] = []
+    charge_max_min: Optional[int] = Field(default=480)
 
 
 class PlanningRequest(BaseModel):

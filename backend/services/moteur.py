@@ -17,6 +17,50 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Dict, Any
 import math
 
+from services.regles_pauses import (
+    PAUSE_30H_MATIN, PAUSE_30H_APREM,
+    PAUSE_35H_MATIN_GROSSE, PAUSE_35H_MATIN_PETITE,
+    PAUSE_35H_APREM_GROSSE, PAUSE_35H_APREM_PETITE,
+)
+
+def calculer_pauses_auto(contrat: str, type_journee: str, heure_fin: float, index_cascade: int) -> List[Tuple[float, float]]:
+    """
+    Calcule les pauses automatiques selon le contrat et le type de journée.
+    index_cascade = position de l'employé dans la cascade (0, 1, 2...)
+    Retourne une liste de (debut_h, fin_h)
+    """
+    pauses = []
+
+    if contrat == "30h":
+        if type_journee == "matin":
+            r = PAUSE_30H_MATIN
+            pauses.append((r["debut"], r["fin"]))
+        else:  # aprem
+            r = PAUSE_30H_APREM
+            debut = r["cascade_debut"] + index_cascade * r["cascade_ecart"]
+            pauses.append((debut, debut + r["duree"] / 60))
+
+    elif contrat == "35h":
+        if type_journee == "matin":
+            # Grosse pause fixe
+            r = PAUSE_35H_MATIN_GROSSE
+            pauses.append((r["debut"], r["fin"]))
+            # Petite pause ~45min avant la fin
+            r2 = PAUSE_35H_MATIN_PETITE
+            debut_petite = heure_fin - r2["avant_fin"] + index_cascade * r2["cascade_ecart"]
+            pauses.append((debut_petite, debut_petite + r2["duree"] / 60))
+        else:  # aprem
+            # Grosse pause en cascade
+            r = PAUSE_35H_APREM_GROSSE
+            debut_grosse = r["cascade_debut"] + index_cascade * r["cascade_ecart"]
+            pauses.append((debut_grosse, debut_grosse + r["duree"] / 60))
+            # Petite pause en cascade vers 17h45
+            r2 = PAUSE_35H_APREM_PETITE
+            debut_petite = r2["cascade_debut"] + index_cascade * r2["cascade_ecart"]
+            pauses.append((debut_petite, debut_petite + r2["duree"] / 60))
+
+    return pauses
+
 def arrondir_au_5min(h: float) -> float:
     """Arrondit au multiple de 5 min le plus proche.
     Ex: 11h43 → 11h45, 11h47 → 11h45, 11h45 → 11h45
@@ -96,6 +140,17 @@ class Employe:
             return emp
 
         creneaux = sorted([(parse_time(d), parse_time(f)) for d, f in creneaux_raw])
+        # Calculer les pauses auto si contrat + type_journee fournis
+        contrat      = data.get("contrat")
+        type_journee = data.get("type_journee")
+        index_cascade = data.get("index_cascade", 0)
+
+        if contrat and type_journee and creneaux:
+            heure_fin_creneau = creneaux[-1][1]
+            pauses_auto = calculer_pauses_auto(contrat, type_journee, heure_fin_creneau, index_cascade)
+            # Ajouter aux pauses manuelles
+            for d, f in pauses_auto:
+                emp.blocs_indisponibles.append((d, f))
         emp.prochaine_dispo = creneaux[0][0]
 
         # Trous avant/entre/après créneaux
@@ -209,9 +264,27 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
     planning: List[Dict]    = []
     avertissements: List[str] = []
 
+    # Calculer les index cascade par type
+    cascade_counts = {"30h_aprem": 0, "35h_aprem_grosse": 0, "35h_aprem_petite": 0, "35h_matin_petite": 0}
+
     for i, data in enumerate(employes_data):
+        contrat      = data.get("contrat", "")
+        type_journee = data.get("type_journee", "")
+
+        # Déterminer l'index cascade pour cet employé
+        if contrat == "30h" and type_journee == "aprem":
+            data["index_cascade"] = cascade_counts["30h_aprem"]
+            cascade_counts["30h_aprem"] += 1
+        elif contrat == "35h" and type_journee == "aprem":
+            data["index_cascade"] = cascade_counts["35h_aprem_grosse"]
+            cascade_counts["35h_aprem_grosse"] += 1
+        elif contrat == "35h" and type_journee == "matin":
+            data["index_cascade"] = cascade_counts["35h_matin_petite"]
+            cascade_counts["35h_matin_petite"] += 1
+        else:
+            data["index_cascade"] = 0
+
         emp = Employe.from_config(i, data)
-        employes.append(emp)
 
         # Pauses fixes au planning
         for d, f in emp.blocs_indisponibles:
