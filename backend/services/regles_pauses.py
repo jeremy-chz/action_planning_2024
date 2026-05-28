@@ -27,7 +27,7 @@ PAUSE_35H_MATIN_GROSSE = {
 
 PAUSE_35H_MATIN_PETITE = {
     "duree":          15,
-    "avant_fin":      0.75,  # ~45 min avant la fin (flexible)
+    "avant_fin":      1.75,  # ~1h45 avant la fin (flexible)
     "cascade_ecart":  0.25,  # 15 min entre chaque employé
 }
 
