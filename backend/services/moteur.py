@@ -37,7 +37,9 @@ def calculer_pauses_auto(contrat: str, type_journee: str, heure_fin: float, inde
     pauses = []
 
     if contrat == "30h":
-        if type_journee == "aprem":
+        if type_journee == "matin":
+            pass
+        else:  # aprem
             r = PAUSE_30H_APREM
             debut = r["cascade_debut"] + index_cascade * r["cascade_ecart"]
             pauses.append((debut, debut + r["duree"] / 60))
