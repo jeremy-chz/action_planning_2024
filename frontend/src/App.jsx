@@ -13,18 +13,21 @@ export default function App() {
   const [magasin, setMagasinState]  = useState(null)
   const [checking, setChecking]     = useState(true)
 
-  useEffect(() => {
-    // Vérifier si déjà connecté
-    const m = getMagasin()
-    if (m) {
-      fetchMe()
-        .then(me => { setMagasinState(me); setMagasin(me) })
-        .catch(() => { removeToken(); setMagasinState(null) })
-        .finally(() => setChecking(false))
-    } else {
-      setChecking(false)
-    }
-  }, [])
+useEffect(() => {
+  const m = getMagasin()
+  if (m) {
+    fetchMe()
+      .then(me => {
+        setMagasinState(me)
+        setMagasin(me)
+        setPage(me.is_admin ? "admin" : "planning")  // ← ajouter cette ligne
+      })
+      .catch(() => { removeToken(); setMagasinState(null) })
+      .finally(() => setChecking(false))
+  } else {
+    setChecking(false)
+  }
+}, [])
 
   const handleLogin = (m) => { setMagasinState(m) }
 
@@ -65,26 +68,24 @@ export default function App() {
 }
 
 function Nav({ page, setPage, magasin, onLogout }) {
-  const tabs = [
-    ["planning", "Générer"],
-    ["personnel", "Personnel"],
-    ["resultats", "Résultats"],
-    ...(magasin.is_admin ? [["admin", "Admin"]] : []),
-  ]
+  const tabs = magasin.is_admin
+    ? [["admin", "Admin"]]
+    : [
+        ["planning", "Générer"],
+        ["personnel", "Personnel"],
+        ["resultats", "Résultats"],
+      ]
+
   return (
     <header className="nav" style={{ height: "auto", flexDirection: "column", padding: "10px 16px", gap: 8 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
         <div className="nav-brand">
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 12, color: "var(--text3)" }}>{magasin.nom}</span>
-          <button className="btn btn-ghost btn-sm" onClick={onLogout} style={{ fontSize: 11 }}>Déconnexion</button>
-        </div>  
-          
-          
-        
-        
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "var(--text3)" }}>{magasin.nom}</span>
+            <button className="btn btn-ghost btn-sm" onClick={onLogout} style={{ fontSize: 11 }}>Déconnexion</button>
+          </div>
         </div>
-          <div className="nav-logo">AC</div>
+        <div className="nav-logo">AC</div>
       </div>
       <nav className="nav-tabs" style={{ width: "100%", justifyContent: "flex-start" }}>
         {tabs.map(([id, label]) => (
