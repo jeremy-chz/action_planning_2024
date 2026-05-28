@@ -17,12 +17,19 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Dict, Any
 import math
 
+def arrondir_au_5min(h: float) -> float:
+    """Arrondit au multiple de 5 min le plus proche.
+    Ex: 11h43 → 11h45, 11h47 → 11h45, 11h45 → 11h45
+    """
+    minutes = round(h * 60)
+    arrondies = round(minutes / 5) * 5
+    return arrondies / 60
+
 # ─── Constantes globales ──────────────────────────────────────────────────────
 HEURE_DEBUT_COUPURE    = 8.0
 HEURE_FIN_COUPURE      = 9.0
 HEURE_FIN_DECHARGEMENT = 19.0
 SEUIL_MIN_TACHE        = 1 / 60   # 1 minute minimum
-TEMPS_SETUP_MIN        = 2 / 60   # 2 min de setup entre deux tâches
 CHARGE_MAX_DEFAUT      = 480.0    # 8h de travail effectif max par employé
 
 # Compétences reconnues par le système
@@ -60,6 +67,7 @@ class Employe:
     minutes_travaillees: float                      = 0.0
     nb_taches: int                                  = 0
     alertes: List[str]                              = field(default_factory=list)
+    delta_arrondi_min: float                        = 0.0   # + = gagné, - = perdu sur les arrondis
 
     @classmethod
     def from_config(cls, id_employe: int, data: Dict) -> "Employe":
@@ -151,14 +159,15 @@ class Employe:
 
 # ─── Contrainte : fenêtre de début au plus tôt ───────────────────────────────
 def _debut_effectif(emp: Employe, tache: Dict) -> float:
-    """Tient compte du 'not_before' d'une tâche et du setup time."""
+    """Arrondit le début de tâche au multiple de 5 min le plus proche."""
     t = emp.prochaine_dispo
     not_before = tache.get("not_before_h")
     if not_before and t < not_before:
         t = not_before
-    if emp.nb_taches > 0:
-        t += TEMPS_SETUP_MIN
-    return t
+    t_arrondi = arrondir_au_5min(t)
+    # Tracker le delta (positif = on a offert du temps, négatif = on a pris du temps)
+    emp.delta_arrondi_min += (t - t_arrondi) * 60
+    return t_arrondi
 
 
 # ─── Moteur principal ─────────────────────────────────────────────────────────
@@ -393,18 +402,24 @@ def _compute_stats(planning: List[Dict], employes: List[Employe], charrettes: Li
     assignees = sum(p["tache_duree"] for p in work)
     taux      = round(assignees / total_min * 100, 1) if total_min else 0
 
+    delta_map = {emp.nom: round(emp.delta_arrondi_min, 1) for emp in employes}
+
     par_emp = {}
     for p in planning:
         nom = p["employe_nom"]
         if nom not in par_emp:
-            par_emp[nom] = {"minutes": 0.0, "taches": 0, "pauses": 0}
+            par_emp[nom] = {
+                "minutes": 0.0,
+                "taches": 0,
+                "pauses": 0,
+                "delta_arrondi": delta_map.get(nom, 0.0)
+            }
         if "WORK" in p["type"]:
             par_emp[nom]["minutes"] += p["tache_duree"]
             par_emp[nom]["taches"]  += 1
         elif "PAUSE" in p["type"]:
             par_emp[nom]["pauses"]  += 1
 
-    # Score d'équilibrage (écart-type normalisé inversé)
     charges = [v["minutes"] for v in par_emp.values()]
     if len(charges) > 1:
         moy = sum(charges) / len(charges)
