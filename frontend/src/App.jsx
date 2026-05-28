@@ -69,12 +69,11 @@ function Nav({ page, setPage, magasin, onLogout }) {
     ["planning", "Générer"],
     ["personnel", "Personnel"],
     ["resultats", "Résultats"],
-    ...(magasin.is_admin ? [["admin", "⚙️ Admin"]] : []),
+    ...(magasin.is_admin ? [["admin", "Admin"]] : []),
   ]
   return (
     <header className="nav">
       <div className="nav-brand">
-        <span className="nav-title">Action <strong>Planning</strong></span>
       </div>
       <nav className="nav-tabs">
         {tabs.map(([id, label]) => (
