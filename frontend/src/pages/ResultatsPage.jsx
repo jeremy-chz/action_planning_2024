@@ -1,5 +1,13 @@
 import { useState } from "react"
 
+function arrondirHeure(h) {
+  const minutes = Math.round(h * 60)
+  const arr = Math.round(minutes / 5) * 5
+  const hh = Math.floor(arr / 60)
+  const mm = arr % 60
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`
+}
+
 function EmployeCard({ nom, taches, stats }) {
   const workTaches = taches.filter(t => t.type.includes("WORK"))
   const totalMin   = workTaches.reduce((s, t) => s + t.tache_duree, 0)
@@ -47,7 +55,7 @@ function EmployeCard({ nom, taches, stats }) {
                   </td>
                   <td>{Math.round(t.tache_duree)} min</td>
                   <td>
-                    <span className="time-mono">{t.debut_str} – {t.fin_str}</span>
+                    <span className="time-mono">{arrondirHeure(t.debut)} – {arrondirHeure(t.fin)}</span>
                   </td>
                   <td>
                     <span className={`badge ${isPause ? "badge-pause" : isPartial ? "badge-partial" : "badge-work"}`}>
