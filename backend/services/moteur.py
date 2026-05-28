@@ -292,6 +292,7 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
             data["index_cascade"] = 0
 
         emp = Employe.from_config(i, data)
+        employes.append(emp)
 
         # Pauses fixes au planning
         for d, f in emp.blocs_indisponibles:

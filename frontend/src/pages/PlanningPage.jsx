@@ -50,7 +50,6 @@ export default function PlanningPage({ onResultats }) {
         })),
         employes_presents: presents.map(p => p.config),
       }
-      console.log("Payload envoyé:", JSON.stringify(payload, null, 2))
       const result = await genererPlanning(payload)
       onResultats(result)
     } catch (e) {
