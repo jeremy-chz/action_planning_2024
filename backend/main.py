@@ -7,13 +7,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from database import engine, Base
-from routers import personnel, planning, scan
+from routers import personnel, planning, scan, auth, admin
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Créer les tables au démarrage"""
     Base.metadata.create_all(bind=engine)
+    # Créer le compte admin si il n'existe pas
+    from sqlalchemy.orm import sessionmaker
+    from models.magasin import Magasin
+    from services.auth import hash_password
+    Session = sessionmaker(bind=engine)
+    db = Session()
+    try:
+        if not db.query(Magasin).filter(Magasin.login == "action-admin").first():
+            admin = Magasin(
+                login="action-admin",
+                password_h=hash_password("ActionAdmin2024!"),
+                nom="Admin",
+                is_admin=True
+            )
+            db.add(admin)
+            db.commit()
+    finally:
+        db.close()
     yield
 
 
@@ -36,6 +53,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router,      prefix="/api/auth",      tags=["Auth"])
+app.include_router(admin.router,     prefix="/api/admin",     tags=["Admin"])
 app.include_router(personnel.router, prefix="/api/personnel", tags=["Personnel"])
 app.include_router(planning.router, prefix="/api/planning", tags=["Planning"])
 app.include_router(scan.router, prefix="/api/scan", tags=["Scan"])
