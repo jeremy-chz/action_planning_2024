@@ -17,11 +17,18 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Dict, Any
 import math
 
-from services.regles_pauses import (
-    PAUSE_30H_MATIN, PAUSE_30H_APREM,
-    PAUSE_35H_MATIN_GROSSE, PAUSE_35H_MATIN_PETITE,
-    PAUSE_35H_APREM_GROSSE, PAUSE_35H_APREM_PETITE,
-)
+try:
+    from services.regles_pauses import (
+        PAUSE_30H_MATIN, PAUSE_30H_APREM,
+        PAUSE_35H_MATIN_GROSSE, PAUSE_35H_MATIN_PETITE,
+        PAUSE_35H_APREM_GROSSE, PAUSE_35H_APREM_PETITE,
+    )
+except ImportError:
+    from regles_pauses import (
+        PAUSE_30H_MATIN, PAUSE_30H_APREM,
+        PAUSE_35H_MATIN_GROSSE, PAUSE_35H_MATIN_PETITE,
+        PAUSE_35H_APREM_GROSSE, PAUSE_35H_APREM_PETITE,
+    )
 
 def calculer_pauses_auto(contrat: str, type_journee: str, heure_fin: float, index_cascade: int) -> List[Tuple[float, float]]:
     """
