@@ -34,11 +34,12 @@ useEffect(() => {
   setPage(m.is_admin ? "admin" : "planning")
 }
 
-  const handleLogout = () => {
-    removeToken()
-    setMagasinState(null)
-    setPage("planning")
-  }
+const handleLogout = () => {
+  removeToken()
+  setMagasinState(null)
+  setPlanningData(null)
+  setPage("planning")
+}
 
   if (checking) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
