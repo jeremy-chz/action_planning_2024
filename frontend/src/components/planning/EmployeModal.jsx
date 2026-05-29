@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { updateTemplate } from "../../utils/api"
 
-const COMPETENCES = ["lourd", "fragile"]
 
 export default function EmployeModal({ employe, onValider, onClose }) {
   const template = employe // employe contient déjà contrat, matin_debut, etc.
@@ -11,9 +10,9 @@ export default function EmployeModal({ employe, onValider, onClose }) {
   const [debut, setDebut]               = useState("")
   const [fin, setFin]                   = useState("")
   const [pauses, setPauses]             = useState([])
-  const [competences, setCompetences]   = useState([])
   const [chargeMax, setChargeMax]       = useState(480)
   const [savingTemplate, setSavingTemplate] = useState(false)
+  const [ordreInverse, setOrdreInverse] = useState(false)
 
   // Quand on coche matin/aprem → pré-remplir les horaires du template
   const handleTypeJournee = (type) => {
@@ -30,7 +29,6 @@ export default function EmployeModal({ employe, onValider, onClose }) {
   const addPause = () => setPauses(p => [...p, { debut: "10:00", duree: "15" }])
   const removePause = i => setPauses(p => p.filter((_, j) => j !== i))
   const updatePause = (i, field, val) => setPauses(p => p.map((pa, j) => j === i ? { ...pa, [field]: val } : pa))
-  const toggleComp = c => setCompetences(cs => cs.includes(c) ? cs.filter(x => x !== c) : [...cs, c])
 
   const handleSaveTemplate = async () => {
     setSavingTemplate(true)
@@ -63,8 +61,9 @@ export default function EmployeModal({ employe, onValider, onClose }) {
       type_journee: typeJournee,
       creneaux:     [[debut, fin]],
       pauses:       pauses.map(p => [p.debut, p.duree]),
-      competences,
+      competences: [],
       charge_max_min: chargeMax,
+      ordre_inverse: ordreInverse,
     }
     onValider(config)
   }
@@ -162,14 +161,19 @@ export default function EmployeModal({ employe, onValider, onClose }) {
 
           <hr className="divider" />
 
-          {/* Compétences */}
-          <div style={{ marginBottom: 20 }}>
-            <label className="input-label">Compétences</label>
-            <div className="chips">
-              {COMPETENCES.map(c => (
-                <div key={c} className={`chip ${competences.includes(c) ? "active" : ""}`}
-                  onClick={() => toggleComp(c)}>{c}</div>
-              ))}
+          <div className="field">
+            <label className="input-label">Ordre des charrettes</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div className={`chip ${!ordreInverse ? "active" : ""}`}
+                onClick={() => setOrdreInverse(false)}
+                style={{ flex: 1, justifyContent: "center", padding: "10px" }}>
+                rapides en premier
+              </div>
+              <div className={`chip ${ordreInverse ? "active" : ""}`}
+                onClick={() => setOrdreInverse(true)}
+                style={{ flex: 1, justifyContent: "center", padding: "10px" }}>
+                Longues en premier
+              </div>
             </div>
           </div>
 

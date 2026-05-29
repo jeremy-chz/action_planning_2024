@@ -113,6 +113,7 @@ class Employe:
     nb_taches: int                                  = 0
     alertes: List[str]                              = field(default_factory=list)
     delta_arrondi_min: float                        = 0.0   # + = gagné, - = perdu sur les arrondis
+    ordre_inverse: bool                             = False
 
     @classmethod
     def from_config(cls, id_employe: int, data: Dict) -> "Employe":
@@ -257,8 +258,6 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
             "competences_requises": comp_req,
         }
         taches.append(t)
-    # Tri : priorité d'abord, puis durée croissante
-    taches.sort(key=lambda x: (x["priorite"], x["duration_h"]))
 
     # ── B : Initialiser les employés ──────────────────────────────────────
     employes: List[Employe] = []
@@ -286,6 +285,7 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
             data["index_cascade"] = 0
 
         emp = Employe.from_config(i, data)
+        emp.ordre_inverse = data.get("ordre_inverse", False)
         employes.append(emp)
 
         # Pauses fixes au planning
@@ -439,10 +439,16 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
 
 # ─── Helpers internes ─────────────────────────────────────────────────────────
 def _choisir_tache(emp: Employe, taches: List[Dict]) -> Optional[int]:
-    """Retourne l'index de la meilleure tâche pour cet employé (priorité + compétences + charge)."""
-    for i, t in enumerate(taches):
-        if emp.peut_faire(t) and emp.charge_restante() >= t["duration_h"] * 60 * 0.1:
-            return i
+    if emp.ordre_inverse:
+        # Parcourir en sens inverse = grandes en premier
+        for i in range(len(taches) - 1, -1, -1):
+            t = taches[i]
+            if emp.peut_faire(t) and emp.charge_restante() >= t["duration_h"] * 60 * 0.1:
+                return i
+    else:
+        for i, t in enumerate(taches):
+            if emp.peut_faire(t) and emp.charge_restante() >= t["duration_h"] * 60 * 0.1:
+                return i
     return None
 
 
