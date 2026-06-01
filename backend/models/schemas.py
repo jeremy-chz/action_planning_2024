@@ -44,8 +44,8 @@ class ConfigEmploye(BaseModel):
     type_journee: Optional[str] = None  # "matin" ou "aprem"
     creneaux: List[Tuple[str, str]] = []
     pauses:   List[Tuple[str, str]] = []
-    competences:    List[str] = []
-    charge_max_min: Optional[int] = Field(default=480)
+    competences:  List[str] = []
+    ordre_inverse: bool = False  # True = grandes en premier
 
 
 class PlanningRequest(BaseModel):

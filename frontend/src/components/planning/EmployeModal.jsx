@@ -5,12 +5,12 @@ import { updateTemplate } from "../../utils/api"
 export default function EmployeModal({ employe, onValider, onClose }) {
   const template = employe // employe contient déjà contrat, matin_debut, etc.
 
-  const [contrat, setContrat]           = useState(template.contrat || "")
+  const contrat = template.contrat || ""
   const [typeJournee, setTypeJournee]   = useState("")
   const [debut, setDebut]               = useState("")
   const [fin, setFin]                   = useState("")
   const [pauses, setPauses]             = useState([])
-  const [chargeMax, setChargeMax]       = useState(480)
+  const [pausesMode, setPausesMode]     = useState("auto")
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [ordreInverse, setOrdreInverse] = useState(false)
 
@@ -51,18 +51,17 @@ export default function EmployeModal({ employe, onValider, onClose }) {
   }
 
   const handleValider = () => {
-    if (!contrat)      { alert("Sélectionne un contrat (30h ou 35h)"); return }
+    if (!contrat)      { alert("Contrat non défini pour cet employé"); return }
     if (!typeJournee)  { alert("Sélectionne matin ou après-midi"); return }
     if (!debut || !fin){ alert("Renseigne les horaires"); return }
 
     const config = {
       nom:          employe.nom,
       contrat,
-      type_journee: typeJournee,
+      type_journee: pausesMode === "auto" ? typeJournee : undefined,
       creneaux:     [[debut, fin]],
       pauses:       pauses.map(p => [p.debut, p.duree]),
       competences: [],
-      charge_max_min: chargeMax,
       ordre_inverse: ordreInverse,
     }
     onValider(config)
@@ -80,14 +79,8 @@ export default function EmployeModal({ employe, onValider, onClose }) {
           {/* Contrat */}
           <div className="field">
             <label className="input-label">Contrat</label>
-            <div style={{ display: "flex", gap: 10 }}>
-              {["30h", "35h"].map(c => (
-                <div key={c} className={`chip ${contrat === c ? "active" : ""}`}
-                  onClick={() => setContrat(c)}
-                  style={{ flex: 1, justifyContent: "center", padding: "10px" }}>
-                  {c}
-                </div>
-              ))}
+            <div className="chip active" style={{ justifyContent: "center", padding: "10px", cursor: "default", opacity: 0.8 }}>
+              {contrat || "Non défini"}
             </div>
           </div>
 
@@ -119,44 +112,59 @@ export default function EmployeModal({ employe, onValider, onClose }) {
             </div>
           </div>
 
-          {/* Info pauses auto */}
-          {contrat && typeJournee && (
-            <div className="alert alert-info" style={{ marginBottom: 16, fontSize: 12 }}>
-              Les pauses seront calculées automatiquement selon le contrat {contrat} {typeJournee === "matin" ? "matin" : "après-midi"}.
-            </div>
-          )}
-
           <hr className="divider" />
 
-          {/* Pauses manuelles supplémentaires */}
+          {/* Pauses */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <span className="input-label" style={{ margin: 0 }}>Pauses manuelles supplémentaires</span>
-              <button className="btn btn-ghost btn-sm" onClick={addPause}>＋</button>
-            </div>
-            {pauses.length === 0 && <p className="pool-empty">Aucune pause manuelle</p>}
-            {pauses.map((pa, i) => (
-              <div key={i} className="row" style={{ marginBottom: 8 }}>
-                <div className="field" style={{ flex: "0 0 auto" }}>
-                  <label className="input-label">Début</label>
-                  <input type="time" className="input" style={{ width: 130 }} value={pa.debut}
-                    onChange={e => updatePause(i, "debut", e.target.value)} />
-                </div>
-                <div className="field" style={{ flex: "0 0 auto" }}>
-                  <label className="input-label">Durée</label>
-                  <select className="input" style={{ width: 110 }} value={pa.duree}
-                    onChange={e => updatePause(i, "duree", e.target.value)}>
-                    <option value="10">10 min</option>
-                    <option value="15">15 min</option>
-                    <option value="20">20 min</option>
-                    <option value="30">30 min</option>
-                    <option value="45">45 min</option>
-                  </select>
-                </div>
-                <button className="btn btn-danger btn-sm" style={{ marginTop: 22 }}
-                  onClick={() => removePause(i)}>✕</button>
+              <span className="input-label" style={{ margin: 0 }}>Pauses</span>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[["auto", "Automatiques"], ["manuel", "Manuelles"]].map(([val, label]) => (
+                  <div key={val} className={`chip ${pausesMode === val ? "active" : ""}`}
+                    onClick={() => setPausesMode(val)}
+                    style={{ padding: "6px 14px", fontSize: 13 }}>
+                    {label}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {pausesMode === "auto" && contrat && typeJournee && (
+              <div className="alert alert-info" style={{ marginBottom: 10, fontSize: 12 }}>
+                Pauses calculées automatiquement — contrat {contrat} {typeJournee === "matin" ? "matin" : "après-midi"}.
+              </div>
+            )}
+
+            {pausesMode === "manuel" && (
+              <>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={addPause}>＋ Ajouter</button>
+                </div>
+                {pauses.length === 0 && <p className="pool-empty">Aucune pause</p>}
+                {pauses.map((pa, i) => (
+                  <div key={i} className="row" style={{ marginBottom: 8 }}>
+                    <div className="field" style={{ flex: "0 0 auto" }}>
+                      <label className="input-label">Début</label>
+                      <input type="time" className="input" style={{ width: 130 }} value={pa.debut}
+                        onChange={e => updatePause(i, "debut", e.target.value)} />
+                    </div>
+                    <div className="field" style={{ flex: "0 0 auto" }}>
+                      <label className="input-label">Durée</label>
+                      <select className="input" style={{ width: 110 }} value={pa.duree}
+                        onChange={e => updatePause(i, "duree", e.target.value)}>
+                        <option value="10">10 min</option>
+                        <option value="15">15 min</option>
+                        <option value="20">20 min</option>
+                        <option value="30">30 min</option>
+                        <option value="45">45 min</option>
+                      </select>
+                    </div>
+                    <button className="btn btn-danger btn-sm" style={{ marginTop: 22 }}
+                      onClick={() => removePause(i)}>✕</button>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
 
           <hr className="divider" />
@@ -175,18 +183,6 @@ export default function EmployeModal({ employe, onValider, onClose }) {
                 Longues en premier
               </div>
             </div>
-          </div>
-
-          <hr className="divider" />
-
-          {/* Charge max */}
-          <div>
-            <label className="input-label">
-              ⏱ Charge max : <strong style={{ color: "var(--text)" }}>{chargeMax} min ({(chargeMax/60).toFixed(1)}h)</strong>
-            </label>
-            <input type="range" min={60} max={600} step={30} value={chargeMax}
-              onChange={e => setChargeMax(Number(e.target.value))}
-              style={{ width: "100%", accentColor: "var(--blue)" }} />
           </div>
 
         </div>

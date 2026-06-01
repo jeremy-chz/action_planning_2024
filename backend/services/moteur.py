@@ -4,13 +4,11 @@ Algorithme d'assignation optimisé avec contraintes avancées
 
 Contraintes actives :
   - Coupure obligatoire 8h-9h
-  - Charge max journalière par employé (en minutes)
   - Priorité de tâche : 1=urgent, 2=normal, 3=basse
   - Fenêtre de livraison : une charrette peut avoir une heure de début au plus tôt
   - Équilibrage de charge entre employés
   - Compétences requises : 'lourd' ou 'fragile'
   - Temps de setup inter-tâches : 2 min entre deux tâches
-  - Avertissement surcharge
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -75,7 +73,6 @@ HEURE_DEBUT_COUPURE    = 8.0
 HEURE_FIN_COUPURE      = 9.0
 HEURE_FIN_DECHARGEMENT = 19.0
 SEUIL_MIN_TACHE        = 1 / 60   # 1 minute minimum
-CHARGE_MAX_DEFAUT      = 480.0    # 8h de travail effectif max par employé
 
 # Compétences reconnues par le système
 COMPETENCES_VALIDES = {"lourd", "fragile"}
@@ -105,7 +102,6 @@ class Employe:
     id: int
     nom: str
     competences: List[str]                          = field(default_factory=list)   # ex: ["lourd", "fragile"]
-    charge_max_min: float                           = CHARGE_MAX_DEFAUT
     blocs_indisponibles: List[Tuple[float, float]]  = field(default_factory=list)
     prochaine_dispo: float                          = 99.0
     tache_en_attente: Optional[Dict]                = None
@@ -123,7 +119,6 @@ class Employe:
             'creneaux': [['07:00','12:00'], ...],
             'pauses':   [['09:00', '30'], ...],
             'competences': ['lourd'],       # optionnel, parmi {'lourd', 'fragile'}
-            'charge_max_min': 360,          # optionnel (minutes)
         }
         """
         competences_brutes = [c.lower() for c in data.get("competences", [])]
@@ -133,7 +128,6 @@ class Employe:
             id=id_employe,
             nom=data["nom"],
             competences=competences,
-            charge_max_min=float(data.get("charge_max_min", CHARGE_MAX_DEFAUT)),
         )
 
         creneaux_raw = data.get("creneaux", [])
@@ -207,9 +201,6 @@ class Employe:
             return True
         return all(r.lower() in self.competences for r in required)
 
-    def charge_restante(self) -> float:
-        return max(0.0, self.charge_max_min - self.minutes_travaillees)
-
     def __repr__(self):
         return f"[{self.nom} | dispo:{hms(self.prochaine_dispo)} | {self.minutes_travaillees:.0f}min]"
 
@@ -243,7 +234,6 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
             'creneaux': [['HH:MM','HH:MM']],
             'pauses': [['HH:MM','min']],
             'competences': ['lourd'],              # optionnel
-            'charge_max_min': int,                 # optionnel
         }]
     """
     # ── A : Préparer & trier les tâches ───────────────────────────────────
@@ -305,7 +295,7 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
 
     while (taches or any(e.tache_en_attente for e in employes)) and tours < tours_max:
         tours += 1
-        employes.sort(key=lambda e: (e.prochaine_dispo, -e.charge_restante()))
+        employes.sort(key=lambda e: (e.prochaine_dispo, e.minutes_travaillees))
         emp = employes[0]
 
         if emp.avancer_apres_pauses():
@@ -322,7 +312,7 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
                 continue
             contrainte = emp.prochaine_contrainte(t_debut)
             t_fin = t_debut + tache["duration_h"]
-            if t_fin > contrainte or emp.charge_restante() < tache["duration_h"] * 60:
+            if t_fin > contrainte:
                 taches.insert(0, tache)
                 emp.prochaine_dispo = contrainte
             else:
@@ -361,16 +351,8 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
         t_fin       = t_debut + duree_h
         taille_trou = contrainte - t_debut
 
-        # Vérif charge max
-        if emp.charge_restante() <= 0:
-            emp.prochaine_dispo = 99.0
-            avertissements.append(f"{emp.nom} a atteint sa charge max journalière.")
-            continue
-
-        duree_reelle_h = min(duree_h, emp.charge_restante() / 60)
-
         # ── Cas 1 : rentre sans conflit ───────────────────────────────────
-        if t_fin <= contrainte and duree_h <= duree_reelle_h:
+        if t_fin <= contrainte:
             planning.append(_make_entry(emp, tache["barcode"], "WORK", duree_h * 60, t_debut, t_fin))
             emp.prochaine_dispo      = t_fin
             emp.minutes_travaillees += duree_h * 60
@@ -420,11 +402,6 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
             non_assignees.append(emp.tache_en_attente["barcode"])
 
     for emp in employes:
-        if emp.minutes_travaillees > emp.charge_max_min * 0.95:
-            avertissements.append(
-                f"⚠️ {emp.nom} approche de sa charge max "
-                f"({emp.minutes_travaillees:.0f}/{emp.charge_max_min:.0f} min)"
-            )
         avertissements.extend(emp.alertes)
 
     planning.sort(key=lambda x: (x["employe_id"], x["debut"]))
@@ -443,11 +420,11 @@ def _choisir_tache(emp: Employe, taches: List[Dict]) -> Optional[int]:
         # Parcourir en sens inverse = grandes en premier
         for i in range(len(taches) - 1, -1, -1):
             t = taches[i]
-            if emp.peut_faire(t) and emp.charge_restante() >= t["duration_h"] * 60 * 0.1:
+            if emp.peut_faire(t):
                 return i
     else:
         for i, t in enumerate(taches):
-            if emp.peut_faire(t) and emp.charge_restante() >= t["duration_h"] * 60 * 0.1:
+            if emp.peut_faire(t):
                 return i
     return None
 
