@@ -172,7 +172,7 @@ class Employe:
 
         # Fin de déchargement global
         emp.blocs_indisponibles.append((HEURE_FIN_DECHARGEMENT, 24.0))
-        emp.blocs_indisponibles.sort()
+        emp.blocs_indisponibles = _fusionner_blocs(emp.blocs_indisponibles)
         return emp
 
     # ── Helpers ───────────────────────────────────────────────────────────────
@@ -416,6 +416,20 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
 
 
 # ─── Helpers internes ─────────────────────────────────────────────────────────
+def _fusionner_blocs(blocs: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
+    """Trie et fusionne les blocs qui se chevauchent ou se touchent."""
+    if not blocs:
+        return blocs
+    blocs = sorted(blocs)
+    fusionne = [blocs[0]]
+    for d, f in blocs[1:]:
+        if d <= fusionne[-1][1]:
+            fusionne[-1] = (fusionne[-1][0], max(fusionne[-1][1], f))
+        else:
+            fusionne.append((d, f))
+    return fusionne
+
+
 def _choisir_tache(emp: Employe, taches: List[Dict]) -> Optional[int]:
     if emp.ordre_inverse:
         # Parcourir en sens inverse = grandes en premier
