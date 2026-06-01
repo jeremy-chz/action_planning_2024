@@ -94,7 +94,7 @@ export default function PlanningPage({ onResultats }) {
                   {disponibles.map(emp => (
                     <div key={emp.id} className="tag" onClick={() => openModal(emp)}>
                       {emp.nom}
-                      {emp.poste && <span style={{ fontSize: 10, color: "var(--text3)" }}> · {emp.poste}</span>}
+                      {emp.contrat && <span style={{ fontSize: 10, color: "var(--text3)" }}> · {emp.contrat}</span>}
                     </div>
                   ))}
                 </div>

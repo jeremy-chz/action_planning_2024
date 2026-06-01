@@ -177,11 +177,16 @@ class Employe:
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def avancer_apres_pauses(self) -> bool:
-        for d, f in self.blocs_indisponibles:
-            if d - 0.001 <= self.prochaine_dispo < f:
-                self.prochaine_dispo = f
-                return True
-        return False
+        avance = False
+        changed = True
+        while changed:
+            changed = False
+            for d, f in self.blocs_indisponibles:
+                if d - 0.001 <= self.prochaine_dispo < f and f > self.prochaine_dispo:
+                    self.prochaine_dispo = f
+                    changed = True
+                    avance = True
+        return avance
 
     def prochaine_contrainte(self, apres: float) -> float:
         for d, _ in self.blocs_indisponibles:
