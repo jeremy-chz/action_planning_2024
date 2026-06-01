@@ -64,6 +64,5 @@ action-planning/
 | GET | `/api/health` | Healthcheck |
 
 ```
-
 ## Auteur
-Développé par **Jérémy CHAZE** - Version Beta 3.0
+Développé par Jérémy CHAZE - Version Beta 3.0
