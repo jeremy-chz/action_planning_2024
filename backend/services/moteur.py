@@ -61,11 +61,12 @@ def calculer_pauses_auto(contrat: str, type_journee: str, heure_fin: float, inde
     return pauses
 
 def arrondir_au_5min(h: float) -> float:
-    """Arrondit au multiple de 5 min le plus proche.
-    Ex: 11h43 → 11h45, 11h47 → 11h45, 11h45 → 11h45
+    """Arrondit au prochain multiple de 5 min (ceiling).
+    Ex: 11h43 → 11h45, 11h45 → 11h45, 11h47 → 11h50
+    Toujours vers l'avant pour ne jamais reculer dans un bloc indisponible.
     """
-    minutes = round(h * 60)
-    arrondies = round(minutes / 5) * 5
+    minutes = h * 60
+    arrondies = math.ceil(minutes / 5) * 5
     return arrondies / 60
 
 # ─── Constantes globales ──────────────────────────────────────────────────────
