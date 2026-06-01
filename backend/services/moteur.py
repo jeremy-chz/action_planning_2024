@@ -73,7 +73,7 @@ def arrondir_au_5min(h: float) -> float:
 HEURE_DEBUT_COUPURE    = 8.0
 HEURE_FIN_COUPURE      = 9.0
 HEURE_FIN_DECHARGEMENT = 19.0
-SEUIL_MIN_TACHE        = 1 / 60   # 1 minute minimum
+SEUIL_MIN_TACHE        = 5 / 60   # 5 minutes minimum (évite les Part 1 inutiles)
 
 # Compétences reconnues par le système
 COMPETENCES_VALIDES = {"lourd", "fragile"}
@@ -241,11 +241,17 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
     taches = []
     for c in charrettes:
         comp_req = [x.lower() for x in c.get("competences_requises", []) if x.lower() in COMPETENCES_VALIDES]
+        not_before_h = None
+        if c.get("not_before"):
+            try:
+                not_before_h = parse_time(c["not_before"])
+            except ValueError:
+                pass
         t = {
             "barcode": c["barcode"],
             "duration_h": round(c["duration_min"] / 60, 4),
             "priorite": int(c.get("priorite", 2)),
-            "not_before_h": parse_time(c["not_before"]) if c.get("not_before") else None,
+            "not_before_h": not_before_h,
             "competences_requises": comp_req,
         }
         taches.append(t)

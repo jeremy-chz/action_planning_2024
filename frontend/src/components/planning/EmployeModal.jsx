@@ -54,6 +54,7 @@ export default function EmployeModal({ employe, onValider, onClose }) {
     if (!contrat)      { alert("Contrat non défini pour cet employé"); return }
     if (!typeJournee)  { alert("Sélectionne matin ou après-midi"); return }
     if (!debut || !fin){ alert("Renseigne les horaires"); return }
+    if (debut >= fin)  { alert("L'heure de début doit être avant l'heure de fin"); return }
 
     const config = {
       nom:          employe.nom,
