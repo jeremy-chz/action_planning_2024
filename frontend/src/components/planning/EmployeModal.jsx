@@ -10,7 +10,7 @@ export default function EmployeModal({ employe, onValider, onClose }) {
   const [debut, setDebut]               = useState("")
   const [fin, setFin]                   = useState("")
   const [pauses, setPauses]             = useState([])
-  const [pausesMode, setPausesMode]     = useState("auto")
+  const [pausesMode, setPausesMode]     = useState("manuel")
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [ordreInverse, setOrdreInverse] = useState(false)
 

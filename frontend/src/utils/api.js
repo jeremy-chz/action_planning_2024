@@ -39,19 +39,19 @@ export async function fetchPersonnel() {
   return res.json()
 }
 
-export async function addPersonnel(nom, poste = "") {
+export async function addPersonnel(nom, poste = "", contrat = "") {
   const res = await fetch(`${BASE}/personnel/`, {
     method: "POST", headers: authHeaders(),
-    body: JSON.stringify({ nom, poste }),
+    body: JSON.stringify({ nom, poste, contrat: contrat || null }),
   })
   if (!res.ok) throw new Error("Erreur ajout employé")
   return res.json()
 }
 
-export async function updatePersonnel(id, nom, poste = "") {
+export async function updatePersonnel(id, nom, poste = "", contrat = "") {
   const res = await fetch(`${BASE}/personnel/${id}`, {
     method: "PUT", headers: authHeaders(),
-    body: JSON.stringify({ nom, poste }),
+    body: JSON.stringify({ nom, poste, contrat: contrat || null }),
   })
   if (!res.ok) throw new Error("Erreur modification employé")
   return res.json()
