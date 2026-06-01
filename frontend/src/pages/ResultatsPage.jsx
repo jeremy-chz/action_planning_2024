@@ -26,7 +26,7 @@ function EmployeCard({ nom, taches, stats }) {
               color: stats.par_employe[nom].delta_arrondi >= 0 ? "var(--red-light)" : "var(--green)",
               fontSize: 11,
             }}>
-              {stats.par_employe[nom].delta_arrondi >= 0 ? "+" : ""}{stats.par_employe[nom].delta_arrondi} min de Mise en rayon par rapport à son TIME
+              {stats.par_employe[nom].delta_arrondi >= 0 ? "+" : ""}{stats.par_employe[nom].delta_arrondi} min // TIME
             </span>
           )}
         </div>
@@ -155,24 +155,15 @@ export default function ResultatsPage({ data, onBack }) {
       {stats.par_employe && Object.keys(stats.par_employe).length > 0 && (
         <div className="card" style={{ marginBottom: 20 }}>
           <div className="card-title">Répartition de la charge</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {Object.entries(stats.par_employe).map(([nom, s]) => {
-              const maxMin = Math.max(...Object.values(stats.par_employe).map(x => x.minutes), 1)
-              const pct = (s.minutes / maxMin) * 100
-              return (
-                <div key={nom}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 600 }}>{nom}</span>
-                    <span style={{ color: "var(--text2)", fontFamily: "DM Mono, monospace" }}>
-                      {Math.round(s.minutes)} min · {s.taches} tâche{s.taches > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <div style={{ height: 6, background: "var(--bg3)", borderRadius: 3, overflow: "hidden" }}>
-                    <div style={{ width: `${pct}%`, height: "100%", background: "var(--blue)", borderRadius: 3, transition: "width 0.5s ease" }} />
-                  </div>
-                </div>
-              )
-            })}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {Object.entries(stats.par_employe).map(([nom, s]) => (
+              <div key={nom} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "4px 0" }}>
+                <span style={{ fontWeight: 600 }}>{nom}</span>
+                <span style={{ color: "var(--text2)", fontFamily: "DM Mono, monospace" }}>
+                  {Math.round(s.minutes)} min · {s.taches} tâche{s.taches > 1 ? "s" : ""}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
