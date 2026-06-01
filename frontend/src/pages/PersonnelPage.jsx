@@ -1,18 +1,14 @@
 import { useState, useEffect } from "react"
 import { fetchPersonnel, addPersonnel, updatePersonnel, deletePersonnel } from "../utils/api"
 
-const POSTES = ["", "Employé polyvalent", "RM", "RMA", "35h", "30h"]
-
 export default function PersonnelPage() {
   const [personnel, setPersonnel] = useState([])
   const [loading, setLoading] = useState(true)
   const [nom, setNom] = useState("")
-  const [poste, setPoste] = useState("")
   const [contrat, setContrat] = useState("")
   const [saving, setSaving] = useState(false)
   const [editId, setEditId] = useState(null)
   const [editNom, setEditNom] = useState("")
-  const [editPoste, setEditPoste] = useState("")
   const [editContrat, setEditContrat] = useState("")
 
   const load = async () => {
@@ -33,8 +29,8 @@ export default function PersonnelPage() {
     if (!contrat) { alert("Sélectionne un contrat (30h ou 35h)"); return }
     setSaving(true)
     try {
-      await addPersonnel(nom.trim(), poste, contrat)
-      setNom(""); setPoste(""); setContrat("")
+      await addPersonnel(nom.trim(), "", contrat)
+      setNom(""); setContrat("")
       await load()
     } catch (e) { alert(e.message) }
     setSaving(false)
@@ -49,14 +45,14 @@ export default function PersonnelPage() {
   }
 
   const startEdit = (emp) => {
-    setEditId(emp.id); setEditNom(emp.nom); setEditPoste(emp.poste || ""); setEditContrat(emp.contrat || "")
+    setEditId(emp.id); setEditNom(emp.nom); setEditContrat(emp.contrat || "")
   }
 
   const handleUpdate = async () => {
     if (!editNom.trim()) return
     if (!editContrat) { alert("Sélectionne un contrat (30h ou 35h)"); return }
     try {
-      await updatePersonnel(editId, editNom.trim(), editPoste, editContrat)
+      await updatePersonnel(editId, editNom.trim(), "", editContrat)
       setEditId(null)
       await load()
     } catch (e) { alert(e.message) }
@@ -69,7 +65,7 @@ export default function PersonnelPage() {
         <p className="section-sub">Gérez la liste des employés disponibles pour le planning</p>
       </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }}>
         {/* Formulaire ajout */}
         <div className="card">
           <div className="card-title">Ajouter un employé</div>
@@ -77,17 +73,11 @@ export default function PersonnelPage() {
             <label className="input-label">Nom *</label>
             <input
               className="input"
-              placeholder="Ex: Nathalie K."
+              placeholder=""
               value={nom}
               onChange={e => setNom(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleAdd()}
             />
-          </div>
-          <div className="field">
-            <label className="input-label">Poste</label>
-            <select className="input" value={poste} onChange={e => setPoste(e.target.value)}>
-              {POSTES.map(p => <option key={p} value={p}>{p || "— sélectionner —"}</option>)}
-            </select>
           </div>
           <div className="field">
             <label className="input-label">Contrat *</label>
@@ -126,10 +116,7 @@ export default function PersonnelPage() {
                 }}>
                   {editId === emp.id ? (
                     <div style={{ display: "flex", gap: 8, flex: 1, alignItems: "center", flexWrap: "wrap" }}>
-                      <input className="input" style={{ flex: 1, minWidth: 100 }} value={editNom} onChange={e => setEditNom(e.target.value)} />
-                      <select className="input" style={{ flex: 1, minWidth: 100 }} value={editPoste} onChange={e => setEditPoste(e.target.value)}>
-                        {POSTES.map(p => <option key={p} value={p}>{p || "— poste —"}</option>)}
-                      </select>
+                      <input className="input" style={{ flex: 1, minWidth: 120 }} value={editNom} onChange={e => setEditNom(e.target.value)} />
                       <div style={{ display: "flex", gap: 6 }}>
                         {["30h", "35h"].map(c => (
                           <div key={c} className={`chip ${editContrat === c ? "active" : ""}`}
@@ -146,9 +133,7 @@ export default function PersonnelPage() {
                     <>
                       <div>
                         <div style={{ fontWeight: 600, fontSize: 14 }}>{emp.nom}</div>
-                        <div style={{ fontSize: 12, color: "var(--text3)" }}>
-                          {[emp.poste, emp.contrat].filter(Boolean).join(" · ")}
-                        </div>
+                        {emp.contrat && <div style={{ fontSize: 12, color: "var(--text3)" }}>{emp.contrat}</div>}
                       </div>
                       <div style={{ display: "flex", gap: 4 }}>
                         <button className="btn btn-ghost btn-sm" onClick={() => startEdit(emp)}>✏️</button>
