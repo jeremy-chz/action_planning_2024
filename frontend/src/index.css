@@ -119,7 +119,7 @@ body {
   outline: none;
   transition: border-color 0.12s;
 }
-.input:focus { border-color: var(--blue); }
+.input:focus { border-color: var(--border2); }
 .input::placeholder { color: var(--text3); }
 select.input { cursor: pointer; }
 
@@ -195,7 +195,7 @@ select.input { cursor: pointer; }
   user-select: none;
 }
 .tag:hover { border-color: var(--text3); color: var(--text); }
-.tag.selected { background: var(--blue-dim); color: var(--blue); border-color: var(--blue); }
+.tag.selected { background: var(--bg4); color: var(--text); border-color: var(--border2); }
 .tag .tag-remove { font-size: 10px; opacity: 0.5; }
 
 /* ── Pool containers ─────────────────────────────────────────────────── */
@@ -348,7 +348,7 @@ select.input { cursor: pointer; }
   font-size: 12px; color: var(--text2); cursor: pointer;
   user-select: none; transition: all 0.12s;
 }
-.chip.active { background: var(--blue-dim); color: var(--blue); border-color: var(--blue); }
+.chip.active { background: var(--bg4); color: var(--text); border-color: var(--border2); }
 .chip:hover:not(.active) { border-color: var(--text3); color: var(--text); }
 
 /* ── Animations ──────────────────────────────────────────────────────── */
