@@ -4,6 +4,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from models.magasin import Magasin
 
+# Fallback intentionnellement faible : main.py refuse de démarrer si cette valeur n'est pas surchargée
 SECRET_KEY = os.environ.get("SECRET_KEY", "change-this-in-production-please")
 ALGORITHM  = "HS256"
 

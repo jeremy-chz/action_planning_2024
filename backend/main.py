@@ -2,9 +2,17 @@
 Action Planning - Backend FastAPI
 Générateur de planning de déchargement charrettes
 """
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+
+# Charger .env en développement local (ignoré si déjà défini par l'env système)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from database import engine, Base
 from routers import personnel, planning, scan, auth, admin
@@ -12,8 +20,13 @@ from routers import personnel, planning, scan, auth, admin
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Vérifier que SECRET_KEY est bien définie (pas la valeur par défaut en prod)
+    from services.auth import SECRET_KEY
+    if SECRET_KEY == "change-this-in-production-please":
+        raise RuntimeError("SECRET_KEY non définie — définir la variable d'environnement SECRET_KEY")
+
     Base.metadata.create_all(bind=engine)
-    
+
     # Migration : ajouter magasin_id si elle n'existe pas
     from sqlalchemy import text
     try:
@@ -27,23 +40,29 @@ async def lifespan(app: FastAPI):
             conn.commit()
     except Exception as e:
         print(f"Migration info: {e}")
-    
+
     # Créer le compte admin si il n'existe pas
+    admin_login    = os.environ.get("ADMIN_LOGIN", "action-admin")
+    admin_password = os.environ.get("ADMIN_PASSWORD")
+    if not admin_password:
+        raise RuntimeError("ADMIN_PASSWORD non définie — définir la variable d'environnement ADMIN_PASSWORD")
+
     from sqlalchemy.orm import sessionmaker
     from models.magasin import Magasin
     from services.auth import hash_password
     Session = sessionmaker(bind=engine)
     db = Session()
     try:
-        if not db.query(Magasin).filter(Magasin.login == "action-admin").first():
-            admin = Magasin(
-                login="action-admin",
-                password_h=hash_password("ActionAdmin2024!"),
+        if not db.query(Magasin).filter(Magasin.login == admin_login).first():
+            admin_account = Magasin(
+                login=admin_login,
+                password_h=hash_password(admin_password),
                 nom="Admin",
                 is_admin=True
             )
-            db.add(admin)
+            db.add(admin_account)
             db.commit()
+            print(f"Compte admin créé : {admin_login}")
     finally:
         db.close()
     yield
