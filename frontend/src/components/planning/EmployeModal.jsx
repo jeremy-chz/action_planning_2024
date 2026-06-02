@@ -1,9 +1,8 @@
 import { useState } from "react"
 import { updateTemplate } from "../../utils/api"
 
-
 export default function EmployeModal({ employe, onValider, onClose }) {
-  const template = employe // employe contient déjà contrat, matin_debut, etc.
+  const template = employe
 
   const contrat = template.contrat || ""
   const [typeJournee, setTypeJournee]   = useState("")
@@ -14,7 +13,6 @@ export default function EmployeModal({ employe, onValider, onClose }) {
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [ordreInverse, setOrdreInverse] = useState(false)
 
-  // Quand on coche matin/aprem → pré-remplir les horaires du template
   const handleTypeJournee = (type) => {
     setTypeJournee(type)
     if (type === "matin") {
@@ -26,27 +24,25 @@ export default function EmployeModal({ employe, onValider, onClose }) {
     }
   }
 
-  const addPause = () => setPauses(p => [...p, { debut: "10:00", duree: "15" }])
-  const removePause = i => setPauses(p => p.filter((_, j) => j !== i))
-  const updatePause = (i, field, val) => setPauses(p => p.map((pa, j) => j === i ? { ...pa, [field]: val } : pa))
+  const addPause    = () => setPauses(p => [...p, { debut: "10:00", duree: "15" }])
+  const removePause = i  => setPauses(p => p.filter((_, j) => j !== i))
+  const updatePause = (i, field, val) =>
+    setPauses(p => p.map((pa, j) => j === i ? { ...pa, [field]: val } : pa))
 
   const handleSaveTemplate = async () => {
     setSavingTemplate(true)
     try {
-      const data = {
-        nom:    employe.nom,
-        poste:  employe.poste,
+      await updateTemplate(employe.id, {
+        nom:         employe.nom,
+        poste:       employe.poste,
         contrat,
         matin_debut: typeJournee === "matin" ? debut : template.matin_debut,
         matin_fin:   typeJournee === "matin" ? fin   : template.matin_fin,
         aprem_debut: typeJournee === "aprem" ? debut : template.aprem_debut,
         aprem_fin:   typeJournee === "aprem" ? fin   : template.aprem_fin,
-      }
-      await updateTemplate(employe.id, data)
-      alert("Template sauvegardé !")
-    } catch (e) {
-      alert(e.message)
-    }
+      })
+      alert("Template sauvegardé")
+    } catch (e) { alert(e.message) }
     setSavingTemplate(false)
   }
 
@@ -56,50 +52,59 @@ export default function EmployeModal({ employe, onValider, onClose }) {
     if (!debut || !fin){ alert("Renseigne les horaires"); return }
     if (debut >= fin)  { alert("L'heure de début doit être avant l'heure de fin"); return }
 
-    const config = {
+    onValider({
       nom:          employe.nom,
       contrat,
       type_journee: pausesMode === "auto" ? typeJournee : undefined,
       creneaux:     [[debut, fin]],
       pauses:       pauses.map(p => [p.debut, p.duree]),
-      competences: [],
+      competences:  [],
       ordre_inverse: ordreInverse,
-    }
-    onValider(config)
+    })
   }
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="modal-header">
-          <span className="modal-title">Configurer : {employe.nom}</span>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <span className="modal-title">{employe.nom}</span>
+          <button className="modal-close" onClick={onClose}>x</button>
         </div>
+
         <div className="modal-body">
 
-          {/* Contrat */}
           <div className="field">
             <label className="input-label">Contrat</label>
-            <div className="chip active" style={{ justifyContent: "center", padding: "10px", cursor: "default", opacity: 0.8 }}>
+            <div style={{
+              display: "inline-block",
+              padding: "5px 12px",
+              background: "var(--bg4)",
+              border: "1px solid var(--border2)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: 12,
+              fontFamily: "IBM Plex Mono, monospace",
+              color: "var(--text2)",
+            }}>
               {contrat || "Non défini"}
             </div>
           </div>
 
-          {/* Matin / Après-midi */}
           <div className="field">
             <label className="input-label">Type de journée</label>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", gap: 8 }}>
               {[["matin", "Matin"], ["aprem", "Après-midi"]].map(([val, label]) => (
-                <div key={val} className={`chip ${typeJournee === val ? "active" : ""}`}
+                <div
+                  key={val}
+                  className={`chip ${typeJournee === val ? "active" : ""}`}
                   onClick={() => handleTypeJournee(val)}
-                  style={{ flex: 1, justifyContent: "center", padding: "10px" }}>
+                  style={{ flex: 1, justifyContent: "center", padding: "8px" }}
+                >
                   {label}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Horaires */}
           <div className="row">
             <div className="field">
               <label className="input-label">Début</label>
@@ -115,15 +120,17 @@ export default function EmployeModal({ employe, onValider, onClose }) {
 
           <hr className="divider" />
 
-          {/* Pauses */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <span className="input-label" style={{ margin: 0 }}>Pauses</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <label className="input-label" style={{ margin: 0 }}>Pauses</label>
               <div style={{ display: "flex", gap: 6 }}>
                 {[["auto", "Automatiques"], ["manuel", "Manuelles"]].map(([val, label]) => (
-                  <div key={val} className={`chip ${pausesMode === val ? "active" : ""}`}
+                  <div
+                    key={val}
+                    className={`chip ${pausesMode === val ? "active" : ""}`}
                     onClick={() => setPausesMode(val)}
-                    style={{ padding: "6px 14px", fontSize: 13 }}>
+                    style={{ padding: "5px 12px" }}
+                  >
                     {label}
                   </div>
                 ))}
@@ -132,16 +139,18 @@ export default function EmployeModal({ employe, onValider, onClose }) {
 
             {pausesMode === "auto" && contrat && typeJournee && (
               <div className="alert alert-info" style={{ marginBottom: 10, fontSize: 12 }}>
-                Pauses calculées automatiquement — contrat {contrat} {typeJournee === "matin" ? "matin" : "après-midi"}.
+                Pauses calculées automatiquement — {contrat} {typeJournee === "matin" ? "matin" : "après-midi"}
               </div>
             )}
 
             {pausesMode === "manuel" && (
               <>
                 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={addPause}>＋ Ajouter</button>
+                  <button className="btn btn-ghost btn-sm" onClick={addPause}>Ajouter une pause</button>
                 </div>
-                {pauses.length === 0 && <p className="pool-empty">Aucune pause</p>}
+                {pauses.length === 0 && (
+                  <p className="pool-empty">Aucune pause</p>
+                )}
                 {pauses.map((pa, i) => (
                   <div key={i} className="row" style={{ marginBottom: 8 }}>
                     <div className="field" style={{ flex: "0 0 auto" }}>
@@ -160,8 +169,13 @@ export default function EmployeModal({ employe, onValider, onClose }) {
                         <option value="45">45 min</option>
                       </select>
                     </div>
-                    <button className="btn btn-danger btn-sm" style={{ marginTop: 22 }}
-                      onClick={() => removePause(i)}>✕</button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      style={{ marginTop: 22 }}
+                      onClick={() => removePause(i)}
+                    >
+                      Retirer
+                    </button>
                   </div>
                 ))}
               </>
@@ -172,27 +186,32 @@ export default function EmployeModal({ employe, onValider, onClose }) {
 
           <div className="field">
             <label className="input-label">Ordre des charrettes</label>
-            <div style={{ display: "flex", gap: 10 }}>
-              <div className={`chip ${!ordreInverse ? "active" : ""}`}
+            <div style={{ display: "flex", gap: 8 }}>
+              <div
+                className={`chip ${!ordreInverse ? "active" : ""}`}
                 onClick={() => setOrdreInverse(false)}
-                style={{ flex: 1, justifyContent: "center", padding: "10px" }}>
-                rapides en premier
+                style={{ flex: 1, justifyContent: "center", padding: "8px" }}
+              >
+                Rapides en premier
               </div>
-              <div className={`chip ${ordreInverse ? "active" : ""}`}
+              <div
+                className={`chip ${ordreInverse ? "active" : ""}`}
                 onClick={() => setOrdreInverse(true)}
-                style={{ flex: 1, justifyContent: "center", padding: "10px" }}>
+                style={{ flex: 1, justifyContent: "center", padding: "8px" }}
+              >
                 Longues en premier
               </div>
             </div>
           </div>
 
         </div>
+
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
           <button className="btn btn-ghost" onClick={handleSaveTemplate} disabled={savingTemplate}>
-            {savingTemplate ? <span className="spinner" /> : "Sauvegarder template"}
+            {savingTemplate ? <span className="spinner" /> : "Sauvegarder"}
           </button>
-          <button className="btn btn-primary" onClick={handleValider}>✓ Valider pour aujourd'hui</button>
+          <button className="btn btn-primary" onClick={handleValider}>Valider</button>
         </div>
       </div>
     </div>

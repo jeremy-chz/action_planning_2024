@@ -13,33 +13,33 @@ export default function App() {
   const [magasin, setMagasinState]  = useState(null)
   const [checking, setChecking]     = useState(true)
 
-useEffect(() => {
-  const m = getMagasin()
-  if (m) {
-    fetchMe()
-      .then(me => {
-        setMagasinState(me)
-        setMagasin(me)
-        setPage(me.is_admin ? "admin" : "planning")
-      })
-      .catch(() => { removeToken(); setMagasinState(null) })
-      .finally(() => setChecking(false))
-  } else {
-    setChecking(false)
-  }
-}, [])
+  useEffect(() => {
+    const m = getMagasin()
+    if (m) {
+      fetchMe()
+        .then(me => {
+          setMagasinState(me)
+          setMagasin(me)
+          setPage(me.is_admin ? "admin" : "planning")
+        })
+        .catch(() => { removeToken(); setMagasinState(null) })
+        .finally(() => setChecking(false))
+    } else {
+      setChecking(false)
+    }
+  }, [])
 
   const handleLogin = (m) => {
-  setMagasinState(m)
-  setPage(m.is_admin ? "admin" : "planning")
-}
+    setMagasinState(m)
+    setPage(m.is_admin ? "admin" : "planning")
+  }
 
-const handleLogout = () => {
-  removeToken()
-  setMagasinState(null)
-  setPlanningData(null)
-  setPage("planning")
-}
+  const handleLogout = () => {
+    removeToken()
+    setMagasinState(null)
+    setPlanningData(null)
+    setPage("planning")
+  }
 
   if (checking) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
@@ -62,7 +62,7 @@ const handleLogout = () => {
         )}
         {page === "resultats" && !planningData && (
           <div className="empty-state">
-            <p>Aucun planning généré. <button className="link-btn" onClick={() => setPage("planning")}>Générer →</button></p>
+            <p>Aucun planning généré. <button className="link-btn" onClick={() => setPage("planning")}>Générer</button></p>
           </div>
         )}
         {page === "admin" && magasin.is_admin && <AdminPage />}
@@ -73,30 +73,32 @@ const handleLogout = () => {
 
 function Nav({ page, setPage, magasin, onLogout }) {
   const tabs = magasin.is_admin
-    ? [["admin", "Admin"]]
+    ? [["admin", "Administration"]]
     : [
-        ["planning", "Générer"],
+        ["planning", "Planning"],
         ["personnel", "Personnel"],
         ["resultats", "Résultats"],
       ]
 
   return (
-    <header className="nav" style={{ height: "auto", flexDirection: "column", padding: "10px 16px", gap: 8 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-        <div className="nav-brand">
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, color: "var(--text3)" }}>{magasin.nom}</span>
-            <button className="btn btn-ghost btn-sm" onClick={onLogout} style={{ fontSize: 11 }}>Déconnexion</button>
-          </div>
-        </div>
-        <div className="nav-logo">AC</div>
+    <header className="nav">
+      <div className="nav-brand">
+        <span className="nav-store">{magasin.nom}</span>
+        <nav className="nav-tabs">
+          {tabs.map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setPage(id)}
+              className={`nav-tab ${page === id ? "active" : ""}`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </div>
-      <nav className="nav-tabs" style={{ width: "100%", justifyContent: "flex-start" }}>
-        {tabs.map(([id, label]) => (
-          <button key={id} onClick={() => setPage(id)}
-            className={`nav-tab ${page === id ? "active" : ""}`}>{label}</button>
-        ))}
-      </nav>
+      <div className="nav-actions">
+        <button className="btn btn-ghost btn-sm" onClick={onLogout}>Déconnexion</button>
+      </div>
     </header>
   )
 }

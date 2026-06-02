@@ -5,12 +5,12 @@ import EmployeModal from "../components/planning/EmployeModal"
 
 export default function PlanningPage({ onResultats }) {
   const [charrettes, setCharrettes] = useState([])
-  const [personnel, setPersonnel] = useState([])
-  const [presents, setPresents] = useState([]) // { id, nom, config }
-  const [loading, setLoading] = useState(true)
+  const [personnel, setPersonnel]   = useState([])
+  const [presents, setPresents]     = useState([])
+  const [loading, setLoading]       = useState(true)
   const [generating, setGenerating] = useState(false)
   const [modalEmploye, setModalEmploye] = useState(null)
-  const [error, setError] = useState("")
+  const [error, setError]           = useState("")
 
   useEffect(() => {
     fetchPersonnel()
@@ -19,24 +19,20 @@ export default function PlanningPage({ onResultats }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const presentIds = new Set(presents.map(p => p.id))
+  const presentIds  = new Set(presents.map(p => p.id))
   const disponibles = personnel.filter(e => !presentIds.has(e.id))
-
-  const openModal = (emp) => setModalEmploye(emp)
 
   const validerConfig = (config) => {
     setPresents(ps => [...ps, { id: modalEmploye.id, nom: modalEmploye.nom, config }])
     setModalEmploye(null)
   }
 
-  const retirerPresent = (id) => {
-    setPresents(ps => ps.filter(p => p.id !== id))
-  }
+  const retirerPresent = (id) => setPresents(ps => ps.filter(p => p.id !== id))
 
   const handleGenerer = async () => {
     setError("")
     if (charrettes.length === 0) { setError("Ajoutez au moins une charrette."); return }
-    if (presents.length === 0) { setError("Sélectionnez au moins un employé présent."); return }
+    if (presents.length === 0)   { setError("Sélectionnez au moins un employé."); return }
 
     setGenerating(true)
     try {
@@ -60,41 +56,42 @@ export default function PlanningPage({ onResultats }) {
 
   return (
     <div>
-      <div className="section-header" style={{ marginTop: 32 }}>
-        <h1 className="section-title">Générer un Planning</h1>
+      <div className="section-header" style={{ marginTop: 8 }}>
+        <h1 className="section-title">Générer un planning</h1>
       </div>
 
-      {/* Charrettes */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card-title">Charrettes à décharger</div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card-title">Charrettes</div>
         <CharretteInput charrettes={charrettes} onChange={setCharrettes} />
       </div>
 
-      {/* Employés */}
       <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card-title">Sélection des employés présents</div>
-
+        <div className="card-title">Employés présents</div>
         {loading ? (
-          <div style={{ textAlign: "center", padding: 24 }}><span className="spinner" /></div>
+          <div style={{ padding: 24, display: "flex", justifyContent: "center" }}>
+            <span className="spinner" />
+          </div>
         ) : (
           <div className="pools">
             <div className="pool">
               <div className="pool-title">
-                Personnel disponible
+                Disponibles
                 <span className="pool-count">{disponibles.length}</span>
               </div>
               {disponibles.length === 0 ? (
                 <p className="pool-empty">
                   {personnel.length === 0
-                    ? "Aucun employé. Ajoutez-en dans \"Personnel\"."
-                    : "Tous les employés sont déjà sélectionnés."}
+                    ? "Aucun employé. Créez-en dans Personnel."
+                    : "Tous les employés sont sélectionnés."}
                 </p>
               ) : (
                 <div className="pool-tags">
                   {disponibles.map(emp => (
-                    <div key={emp.id} className="tag" onClick={() => openModal(emp)}>
+                    <div key={emp.id} className="tag" onClick={() => setModalEmploye(emp)}>
                       {emp.nom}
-                      {emp.contrat && <span style={{ fontSize: 10, color: "var(--text3)" }}> · {emp.contrat}</span>}
+                      {emp.contrat && (
+                        <span style={{ fontSize: 10, color: "var(--text3)" }}>{emp.contrat}</span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -103,17 +100,17 @@ export default function PlanningPage({ onResultats }) {
 
             <div className="pool">
               <div className="pool-title">
-                Présents & configurés
+                Configurés
                 <span className="pool-count">{presents.length}</span>
               </div>
               {presents.length === 0 ? (
-                <p className="pool-empty">Cliquez sur un employé pour le configurer et l'ajouter</p>
+                <p className="pool-empty">Cliquez sur un employé pour le configurer</p>
               ) : (
                 <div className="pool-tags">
                   {presents.map(p => (
                     <div key={p.id} className="tag selected">
                       {p.nom}
-                      <span className="tag-remove" onClick={() => retirerPresent(p.id)}>✕</span>
+                      <span className="tag-remove" onClick={() => retirerPresent(p.id)}>x</span>
                     </div>
                   ))}
                 </div>
@@ -123,15 +120,17 @@ export default function PlanningPage({ onResultats }) {
         )}
       </div>
 
-      {error && <div className="alert alert-danger" style={{ marginBottom: 16 }}>{error}</div>}
+      {error && (
+        <div className="alert alert-danger" style={{ marginBottom: 16 }}>{error}</div>
+      )}
 
       <button
         className="btn btn-primary btn-full"
-        style={{ fontSize: 16, padding: "14px 24px", borderRadius: 10 }}
+        style={{ fontSize: 14, padding: "12px 24px" }}
         onClick={handleGenerer}
         disabled={generating}
       >
-        {generating ? <><span className="spinner" /> Génération en cours…</> : "Générer le Planning"}
+        {generating ? <><span className="spinner" /> Génération en cours</> : "Générer le planning"}
       </button>
 
       {modalEmploye && (
