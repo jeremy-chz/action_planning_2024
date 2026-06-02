@@ -217,12 +217,6 @@ export default function ResultatsPage({ data }) {
 
   const nbEtiquettes = construireEtiquettes(planning).length
 
-  // Delta total arrondi = somme des deltas par employé
-  const deltaTotal = stats.par_employe
-    ? Object.values(stats.par_employe).reduce((s, e) => s + (e.delta_arrondi || 0), 0)
-    : 0
-  const deltaTotalArrondi = Math.round(deltaTotal * 10) / 10
-
   return (
     <div>
       <div className="section-header" style={{
@@ -264,12 +258,6 @@ export default function ResultatsPage({ data }) {
             {stats.score_equilibrage ?? 0}%
           </div>
           <div className="stat-label">Equilibrage</div>
-        </div>
-        <div className="stat-card">
-          <div className={`stat-value ${deltaTotalArrondi >= 0 ? "stat-green" : "stat-yellow"}`}>
-            {deltaTotalArrondi >= 0 ? "+" : ""}{deltaTotalArrondi} min
-          </div>
-          <div className="stat-label">Delta arrondi</div>
         </div>
       </div>
 
