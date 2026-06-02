@@ -81,9 +81,8 @@ function Nav({ page, setPage, magasin, onLogout }) {
       ]
 
   return (
-    <header className="nav">
-      <div className="nav-brand">
-        <span className="nav-store">{magasin.nom}</span>
+    <>
+      <header className="nav">
         <nav className="nav-tabs">
           {tabs.map(([id, label]) => (
             <button
@@ -95,10 +94,13 @@ function Nav({ page, setPage, magasin, onLogout }) {
             </button>
           ))}
         </nav>
+        <div className="nav-actions">
+          <button className="btn btn-ghost btn-sm" onClick={onLogout}>Déconnexion</button>
+        </div>
+      </header>
+      <div className="nav-subbar">
+        <span className="nav-store">{magasin.nom}</span>
       </div>
-      <div className="nav-actions">
-        <button className="btn btn-ghost btn-sm" onClick={onLogout}>Déconnexion</button>
-      </div>
-    </header>
+    </>
   )
 }
