@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react"
-import { fetchMagasins, createMagasin, updateMagasin, deleteMagasin } from "../utils/api"
+import { fetchMagasins, createMagasin, updateMagasin, deleteMagasin, fetchLogs } from "../utils/api"
+
+function formatDate(iso) {
+  if (!iso) return ""
+  const d = new Date(iso)
+  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })
+    + " " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+}
 
 export default function AdminPage() {
   const [magasins, setMagasins] = useState([])
@@ -12,13 +19,27 @@ export default function AdminPage() {
   const [editNom, setEditNom]   = useState("")
   const [editPwd, setEditPwd]   = useState("")
 
+  const [logs, setLogs]           = useState([])
+  const [warnings, setWarnings]   = useState([])
+  const [logsLoading, setLogsLoading] = useState(true)
+
   const load = async () => {
     try { setMagasins(await fetchMagasins()) }
     catch (e) { alert(e.message) }
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [])
+  const loadLogs = async () => {
+    setLogsLoading(true)
+    try {
+      const data = await fetchLogs()
+      setLogs(data.logs)
+      setWarnings(data.warnings)
+    } catch (e) { /* silencieux */ }
+    finally { setLogsLoading(false) }
+  }
+
+  useEffect(() => { load(); loadLogs() }, [])
 
   const handleCreate = async () => {
     if (!nom.trim() || !loginStr.trim() || !password.trim()) return
@@ -53,6 +74,18 @@ export default function AdminPage() {
       </div>
 
       <div style={{ display: "grid", gap: 16 }}>
+
+        {/* Warnings multi-IP */}
+        {warnings.length > 0 && (
+          <div className="alert alert-warning" style={{ flexDirection: "column", gap: 4 }}>
+            <strong style={{ fontSize: 12 }}>Connexions suspectes</strong>
+            {warnings.map((w, i) => (
+              <div key={i} style={{ fontSize: 12 }}>{w}</div>
+            ))}
+          </div>
+        )}
+
+        {/* Créer un magasin */}
         <div className="card">
           <div className="card-title">Créer un magasin</div>
           <div className="field">
@@ -78,6 +111,7 @@ export default function AdminPage() {
           </button>
         </div>
 
+        {/* Liste magasins */}
         <div className="card">
           <div className="card-title" style={{ display: "flex", justifyContent: "space-between" }}>
             <span>Magasins actifs</span>
@@ -128,6 +162,56 @@ export default function AdminPage() {
             </ul>
           )}
         </div>
+
+        {/* Logs de connexion */}
+        <div className="card">
+          <div className="card-title" style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>Logs de connexion</span>
+            <button className="btn btn-ghost btn-sm" onClick={loadLogs} style={{ textTransform: "none", letterSpacing: 0 }}>
+              Actualiser
+            </button>
+          </div>
+          {logsLoading ? (
+            <div style={{ textAlign: "center", padding: 24 }}><span className="spinner" /></div>
+          ) : logs.length === 0 ? (
+            <p className="pool-empty">Aucun log enregistré.</p>
+          ) : (
+            <table className="task-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Magasin</th>
+                  <th>IP</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map(l => (
+                  <tr key={l.id}>
+                    <td>
+                      <span className="time-mono">{formatDate(l.date)}</span>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 500, fontSize: 12 }}>{l.magasin_nom || l.magasin_login}</div>
+                      <div style={{ fontSize: 10, color: "var(--text3)", fontFamily: "IBM Plex Mono, monospace" }}>
+                        {l.magasin_login}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="barcode-mono" style={{ fontSize: 11 }}>{l.ip}</span>
+                    </td>
+                    <td>
+                      <span className={`badge ${l.succes ? "badge-work" : "badge-pause"}`}>
+                        {l.succes ? "OK" : "Echec"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
       </div>
     </div>
   )

@@ -16,6 +16,7 @@ except ImportError:
 
 from database import engine, Base
 from routers import personnel, planning, scan, auth, admin
+import models.log_connexion  # noqa: F401 — enregistre le modèle pour create_all
 
 
 @asynccontextmanager

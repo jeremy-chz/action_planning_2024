@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func, cast, Date
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime, timezone
 
 from database import get_db
 from models.magasin import Magasin
+from models.log_connexion import LogConnexion
 from services.auth import hash_password
 from routers.auth import get_current_admin
 
@@ -55,3 +58,44 @@ def delete_magasin(id: int, db: Session = Depends(get_db), _=Depends(get_current
     db.delete(m)
     db.commit()
     return {"success": True}
+
+
+@router.get("/logs")
+def get_logs(db: Session = Depends(get_db), _=Depends(get_current_admin)):
+    logs = (
+        db.query(LogConnexion)
+        .order_by(LogConnexion.date.desc())
+        .limit(200)
+        .all()
+    )
+
+    # Détecter les magasins avec plusieurs IP différentes aujourd'hui
+    today = datetime.now(timezone.utc).date()
+    warnings = []
+    logins_today = db.query(
+        LogConnexion.magasin_login,
+        LogConnexion.magasin_nom,
+        func.count(func.distinct(LogConnexion.ip)).label("nb_ip")
+    ).filter(
+        LogConnexion.succes == True,
+        cast(LogConnexion.date, Date) == today,
+    ).group_by(LogConnexion.magasin_login, LogConnexion.magasin_nom).all()
+
+    for row in logins_today:
+        if row.nb_ip > 1:
+            warnings.append(f"{row.magasin_nom or row.magasin_login} connecté depuis {row.nb_ip} IP différentes aujourd'hui")
+
+    return {
+        "logs": [
+            {
+                "id":            l.id,
+                "magasin_login": l.magasin_login,
+                "magasin_nom":   l.magasin_nom,
+                "ip":            l.ip,
+                "succes":        l.succes,
+                "date":          l.date.isoformat() if l.date else None,
+            }
+            for l in logs
+        ],
+        "warnings": warnings,
+    }

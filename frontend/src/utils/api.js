@@ -112,6 +112,12 @@ export async function deleteMagasin(id) {
   return res.json()
 }
 
+export async function fetchLogs() {
+  const res = await fetch(`${BASE}/admin/logs`, { headers: authHeaders() })
+  if (!res.ok) throw new Error("Erreur chargement logs")
+  return res.json()
+}
+
 export async function updateTemplate(id, templateData) {
   const res = await fetch(`${BASE}/personnel/${id}`, {
     method: "PUT", headers: authHeaders(),
