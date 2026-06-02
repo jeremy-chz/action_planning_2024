@@ -206,7 +206,7 @@ function EmployeCard({ nom, taches, stats }) {
   )
 }
 
-export default function ResultatsPage({ data, onBack }) {
+export default function ResultatsPage({ data }) {
   const { planning = [], non_assignees = [], stats = {}, avertissements = [] } = data
 
   const parEmploye = {}
@@ -215,23 +215,13 @@ export default function ResultatsPage({ data, onBack }) {
     parEmploye[entry.employe_nom].push(entry)
   }
 
-  const exportCSV = () => {
-    const headers = ["Employé", "Code", "Type", "Durée (min)", "Début", "Fin"]
-    const rows    = planning.map(t => [
-      t.employe_nom, t.barcode, t.type,
-      Math.round(t.tache_duree), t.debut_str, t.fin_str,
-    ])
-    const bom = "﻿"
-    const csv = bom + [headers, ...rows].map(r => r.join(";")).join("\n")
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement("a")
-    a.href = url
-    a.download = `planning_${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-  }
-
   const nbEtiquettes = construireEtiquettes(planning).length
+
+  // Delta total arrondi = somme des deltas par employé
+  const deltaTotal = stats.par_employe
+    ? Object.values(stats.par_employe).reduce((s, e) => s + (e.delta_arrondi || 0), 0)
+    : 0
+  const deltaTotalArrondi = Math.round(deltaTotal * 10) / 10
 
   return (
     <div>
@@ -247,15 +237,11 @@ export default function ResultatsPage({ data, onBack }) {
             })}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          <button className="btn btn-ghost btn-sm" onClick={exportCSV}>Export CSV</button>
-          {nbEtiquettes > 0 && (
-            <button className="btn btn-ghost btn-sm" onClick={() => imprimerEtiquettes(planning)}>
-              Imprimer étiquettes ({nbEtiquettes})
-            </button>
-          )}
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>Nouveau planning</button>
-        </div>
+        {nbEtiquettes > 0 && (
+          <button className="btn btn-ghost btn-sm" onClick={() => imprimerEtiquettes(planning)}>
+            Imprimer étiquettes ({nbEtiquettes})
+          </button>
+        )}
       </div>
 
       <div className="stats-grid" style={{ marginBottom: 20 }}>
@@ -278,6 +264,12 @@ export default function ResultatsPage({ data, onBack }) {
             {stats.score_equilibrage ?? 0}%
           </div>
           <div className="stat-label">Equilibrage</div>
+        </div>
+        <div className="stat-card">
+          <div className={`stat-value ${deltaTotalArrondi >= 0 ? "stat-green" : "stat-yellow"}`}>
+            {deltaTotalArrondi >= 0 ? "+" : ""}{deltaTotalArrondi} min
+          </div>
+          <div className="stat-label">Delta arrondi</div>
         </div>
       </div>
 

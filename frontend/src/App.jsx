@@ -58,7 +58,7 @@ export default function App() {
         )}
         {page === "personnel" && <PersonnelPage />}
         {page === "resultats" && planningData && (
-          <ResultatsPage data={planningData} onBack={() => setPage("planning")} />
+          <ResultatsPage data={planningData} />
         )}
         {page === "resultats" && !planningData && (
           <div className="empty-state">
