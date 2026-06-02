@@ -53,7 +53,13 @@ async def lifespan(app: FastAPI):
     Session = sessionmaker(bind=engine)
     db = Session()
     try:
-        if not db.query(Magasin).filter(Magasin.login == admin_login).first():
+        existing = db.query(Magasin).filter(Magasin.login == admin_login).first()
+        if existing:
+            # Toujours resynchroniser le hash avec le password de l'env
+            existing.password_h = hash_password(admin_password)
+            db.commit()
+            print(f"Compte admin mis à jour : {admin_login}")
+        else:
             admin_account = Magasin(
                 login=admin_login,
                 password_h=hash_password(admin_password),
