@@ -213,15 +213,22 @@ class Employe:
 
 # ─── Contrainte : fenêtre de début au plus tôt ───────────────────────────────
 def _debut_effectif(emp: Employe, tache: Dict) -> float:
-    """Arrondit le début de tâche au multiple de 5 min le plus proche."""
+    """Début de tâche = prochaine dispo, sans arrondi (on arrondit la fin)."""
     t = emp.prochaine_dispo
     not_before = tache.get("not_before_h")
     if not_before and t < not_before:
         t = not_before
-    t_arrondi = arrondir_au_5min(t)
-    # Tracker le delta (positif = on a offert du temps, négatif = on a pris du temps)
-    emp.delta_arrondi_min += (t - t_arrondi) * 60
-    return t_arrondi
+    return t
+
+
+def _fin_effective(emp: Employe, t_debut: float, duree_h: float) -> float:
+    """Arrondit la fin de tâche au multiple de 5 min le plus proche.
+    Delta positif = on a rendu du temps à l'employé, négatif = on lui en a pris.
+    """
+    t_fin_exacte = t_debut + duree_h
+    t_fin_arrondie = arrondir_au_5min(t_fin_exacte)
+    emp.delta_arrondi_min += (t_fin_exacte - t_fin_arrondie) * 60
+    return t_fin_arrondie
 
 
 # ─── Moteur principal ─────────────────────────────────────────────────────────
@@ -323,7 +330,7 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
                 emp.tache_en_attente = tache
                 continue
             contrainte = emp.prochaine_contrainte(t_debut)
-            t_fin = t_debut + tache["duration_h"]
+            t_fin = _fin_effective(emp, t_debut, tache["duration_h"])
             if t_fin > contrainte:
                 taches.insert(0, tache)
                 emp.prochaine_dispo = contrainte
@@ -360,7 +367,7 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
 
         contrainte  = emp.prochaine_contrainte(t_debut)
         duree_h     = tache["duration_h"]
-        t_fin       = t_debut + duree_h
+        t_fin       = _fin_effective(emp, t_debut, duree_h)
         taille_trou = contrainte - t_debut
 
         # ── Cas 1 : rentre sans conflit ───────────────────────────────────
@@ -382,7 +389,7 @@ def generer_planning(charrettes: List[Dict], employes_data: List[Dict]) -> Dict[
         idx_petit = _trouver_petite_tache(emp, taches, taille_trou, exclure=tache_idx)
         if idx_petit is not None:
             petite  = taches.pop(idx_petit)
-            t_fin_p = t_debut + petite["duration_h"]
+            t_fin_p = _fin_effective(emp, t_debut, petite["duration_h"])
             planning.append(_make_entry(emp, petite["barcode"], "WORK",
                                         petite["duration_h"] * 60, t_debut, t_fin_p))
             emp.prochaine_dispo      = t_fin_p
