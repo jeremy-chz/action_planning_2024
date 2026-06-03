@@ -13,24 +13,22 @@ export default function EmployeModal({ employe, onValider, onTemplateSaved, onCl
   })
 
   const [typeJournee, setTypeJournee]   = useState("")
-  const [debut, setDebut]               = useState("")
-  const [fin, setFin]                   = useState("")
+  const [matinDebut, setMatinDebut]     = useState(employe.matin_debut || "")
+  const [matinFin, setMatinFin]         = useState(employe.matin_fin   || "")
+  const [apremDebut, setApremDebut]     = useState(employe.aprem_debut || "")
+  const [apremFin, setApremFin]         = useState(employe.aprem_fin   || "")
   const [pauses, setPauses]             = useState([])
   const [pausesMode, setPausesMode]     = useState("manuel")
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [saveOk, setSaveOk]             = useState(false)
   const [ordreInverse, setOrdreInverse] = useState(false)
 
-  const handleTypeJournee = (type) => {
-    setTypeJournee(type)
-    if (type === "matin") {
-      setDebut(horaires.matin_debut)
-      setFin(horaires.matin_fin)
-    } else {
-      setDebut(horaires.aprem_debut)
-      setFin(horaires.aprem_fin)
-    }
-  }
+  const handleTypeJournee = (type) => setTypeJournee(type)
+
+  const debut = typeJournee === "matin" ? matinDebut : apremDebut
+  const fin   = typeJournee === "matin" ? matinFin   : apremFin
+  const setDebut = typeJournee === "matin" ? setMatinDebut : setApremDebut
+  const setFin   = typeJournee === "matin" ? setMatinFin   : setApremFin
 
   const addPause    = () => setPauses(p => [...p, { debut: "10:00", duree: "15" }])
   const removePause = i  => setPauses(p => p.filter((_, j) => j !== i))
@@ -38,23 +36,18 @@ export default function EmployeModal({ employe, onValider, onTemplateSaved, onCl
     setPauses(p => p.map((pa, j) => j === i ? { ...pa, [field]: val } : pa))
 
   const handleSaveTemplate = async () => {
-    if (!typeJournee || !debut || !fin) return
     setSavingTemplate(true)
-    const nouvellesHoraires = {
-      matin_debut: typeJournee === "matin" ? debut : horaires.matin_debut,
-      matin_fin:   typeJournee === "matin" ? fin   : horaires.matin_fin,
-      aprem_debut: typeJournee === "aprem" ? debut : horaires.aprem_debut,
-      aprem_fin:   typeJournee === "aprem" ? fin   : horaires.aprem_fin,
-    }
     try {
       await updateTemplate(employe.id, {
-        nom:    employe.nom,
-        poste:  employe.poste,
+        nom:         employe.nom,
+        poste:       employe.poste,
         contrat,
-        ...nouvellesHoraires,
+        matin_debut: matinDebut || null,
+        matin_fin:   matinFin   || null,
+        aprem_debut: apremDebut || null,
+        aprem_fin:   apremFin   || null,
       })
-      // Mettre à jour le state local pour que la prochaine save ait les bonnes valeurs
-      setHoraires(nouvellesHoraires)
+      setHoraires({ matin_debut: matinDebut, matin_fin: matinFin, aprem_debut: apremDebut, aprem_fin: apremFin })
       setSaveOk(true)
       setTimeout(() => setSaveOk(false), 2000)
       if (onTemplateSaved) onTemplateSaved()
@@ -65,7 +58,7 @@ export default function EmployeModal({ employe, onValider, onTemplateSaved, onCl
   const handleValider = () => {
     if (!contrat)      { alert("Contrat non défini pour cet employé"); return }
     if (!typeJournee)  { alert("Sélectionne matin ou après-midi"); return }
-    if (!debut || !fin){ alert("Renseigne les horaires"); return }
+    if (!debut || !fin){ alert("Renseigne les horaires pour " + (typeJournee === "matin" ? "le matin" : "l'après-midi")); return }
     if (debut >= fin)  { alert("L'heure de début doit être avant l'heure de fin"); return }
 
     onValider({
@@ -215,7 +208,7 @@ export default function EmployeModal({ employe, onValider, onTemplateSaved, onCl
 
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
-          <button className="btn btn-ghost" onClick={handleSaveTemplate} disabled={savingTemplate || !typeJournee || !debut || !fin}>
+          <button className="btn btn-ghost" onClick={handleSaveTemplate} disabled={savingTemplate}>
             {savingTemplate ? <span className="spinner" /> : saveOk ? "Sauvegarde OK" : "Sauvegarder"}
           </button>
           <button className="btn btn-primary" onClick={handleValider}>Valider</button>
