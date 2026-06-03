@@ -20,7 +20,15 @@ export default function PlanningPage({ onResultats }) {
   }, [])
 
   const presentIds  = new Set(presents.map(p => p.id))
-  const disponibles = personnel.filter(e => !presentIds.has(e.id))
+  const disponibles = personnel
+    .filter(e => !presentIds.has(e.id))
+    .sort((a, b) => {
+      const contratOrder = { "35h": 0, "30h": 1 }
+      const ca = contratOrder[a.contrat] ?? 2
+      const cb = contratOrder[b.contrat] ?? 2
+      if (ca !== cb) return ca - cb
+      return a.nom.localeCompare(b.nom, "fr")
+    })
 
   const validerConfig = (config) => {
     setPresents(ps => [...ps, { id: modalEmploye.id, nom: modalEmploye.nom, config }])

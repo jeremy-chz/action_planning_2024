@@ -2,25 +2,33 @@ import { useState } from "react"
 import { updateTemplate } from "../../utils/api"
 
 export default function EmployeModal({ employe, onValider, onClose }) {
-  const template = employe
+  const contrat = employe.contrat || ""
 
-  const contrat = template.contrat || ""
+  // Horaires stockés localement pour être mis à jour après chaque save
+  const [horaires, setHoraires] = useState({
+    matin_debut: employe.matin_debut || "",
+    matin_fin:   employe.matin_fin   || "",
+    aprem_debut: employe.aprem_debut || "",
+    aprem_fin:   employe.aprem_fin   || "",
+  })
+
   const [typeJournee, setTypeJournee]   = useState("")
   const [debut, setDebut]               = useState("")
   const [fin, setFin]                   = useState("")
   const [pauses, setPauses]             = useState([])
   const [pausesMode, setPausesMode]     = useState("manuel")
   const [savingTemplate, setSavingTemplate] = useState(false)
+  const [saveOk, setSaveOk]             = useState(false)
   const [ordreInverse, setOrdreInverse] = useState(false)
 
   const handleTypeJournee = (type) => {
     setTypeJournee(type)
     if (type === "matin") {
-      setDebut(template.matin_debut || "")
-      setFin(template.matin_fin || "")
+      setDebut(horaires.matin_debut)
+      setFin(horaires.matin_fin)
     } else {
-      setDebut(template.aprem_debut || "")
-      setFin(template.aprem_fin || "")
+      setDebut(horaires.aprem_debut)
+      setFin(horaires.aprem_fin)
     }
   }
 
@@ -30,18 +38,25 @@ export default function EmployeModal({ employe, onValider, onClose }) {
     setPauses(p => p.map((pa, j) => j === i ? { ...pa, [field]: val } : pa))
 
   const handleSaveTemplate = async () => {
+    if (!typeJournee || !debut || !fin) return
     setSavingTemplate(true)
+    const nouvellesHoraires = {
+      matin_debut: typeJournee === "matin" ? debut : horaires.matin_debut,
+      matin_fin:   typeJournee === "matin" ? fin   : horaires.matin_fin,
+      aprem_debut: typeJournee === "aprem" ? debut : horaires.aprem_debut,
+      aprem_fin:   typeJournee === "aprem" ? fin   : horaires.aprem_fin,
+    }
     try {
       await updateTemplate(employe.id, {
-        nom:         employe.nom,
-        poste:       employe.poste,
+        nom:    employe.nom,
+        poste:  employe.poste,
         contrat,
-        matin_debut: typeJournee === "matin" ? debut : template.matin_debut,
-        matin_fin:   typeJournee === "matin" ? fin   : template.matin_fin,
-        aprem_debut: typeJournee === "aprem" ? debut : template.aprem_debut,
-        aprem_fin:   typeJournee === "aprem" ? fin   : template.aprem_fin,
+        ...nouvellesHoraires,
       })
-      alert("Template sauvegardé")
+      // Mettre à jour le state local pour que la prochaine save ait les bonnes valeurs
+      setHoraires(nouvellesHoraires)
+      setSaveOk(true)
+      setTimeout(() => setSaveOk(false), 2000)
     } catch (e) { alert(e.message) }
     setSavingTemplate(false)
   }
@@ -148,9 +163,7 @@ export default function EmployeModal({ employe, onValider, onClose }) {
                 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
                   <button className="btn btn-ghost btn-sm" onClick={addPause}>Ajouter une pause</button>
                 </div>
-                {pauses.length === 0 && (
-                  <p className="pool-empty">Aucune pause</p>
-                )}
+                {pauses.length === 0 && <p className="pool-empty">Aucune pause</p>}
                 {pauses.map((pa, i) => (
                   <div key={i} className="row" style={{ marginBottom: 8 }}>
                     <div className="field" style={{ flex: "0 0 auto" }}>
@@ -169,11 +182,8 @@ export default function EmployeModal({ employe, onValider, onClose }) {
                         <option value="45">45 min</option>
                       </select>
                     </div>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      style={{ marginTop: 22 }}
-                      onClick={() => removePause(i)}
-                    >
+                    <button className="btn btn-danger btn-sm" style={{ marginTop: 22 }}
+                      onClick={() => removePause(i)}>
                       Retirer
                     </button>
                   </div>
@@ -187,18 +197,14 @@ export default function EmployeModal({ employe, onValider, onClose }) {
           <div className="field">
             <label className="input-label">Ordre des charrettes</label>
             <div style={{ display: "flex", gap: 8 }}>
-              <div
-                className={`chip ${!ordreInverse ? "active" : ""}`}
+              <div className={`chip ${!ordreInverse ? "active" : ""}`}
                 onClick={() => setOrdreInverse(false)}
-                style={{ flex: 1, justifyContent: "center", padding: "8px" }}
-              >
+                style={{ flex: 1, justifyContent: "center", padding: "8px" }}>
                 Rapides en premier
               </div>
-              <div
-                className={`chip ${ordreInverse ? "active" : ""}`}
+              <div className={`chip ${ordreInverse ? "active" : ""}`}
                 onClick={() => setOrdreInverse(true)}
-                style={{ flex: 1, justifyContent: "center", padding: "8px" }}
-              >
+                style={{ flex: 1, justifyContent: "center", padding: "8px" }}>
                 Longues en premier
               </div>
             </div>
@@ -208,8 +214,8 @@ export default function EmployeModal({ employe, onValider, onClose }) {
 
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
-          <button className="btn btn-ghost" onClick={handleSaveTemplate} disabled={savingTemplate}>
-            {savingTemplate ? <span className="spinner" /> : "Sauvegarder"}
+          <button className="btn btn-ghost" onClick={handleSaveTemplate} disabled={savingTemplate || !typeJournee || !debut || !fin}>
+            {savingTemplate ? <span className="spinner" /> : saveOk ? "Sauvegarde OK" : "Sauvegarder"}
           </button>
           <button className="btn btn-primary" onClick={handleValider}>Valider</button>
         </div>
