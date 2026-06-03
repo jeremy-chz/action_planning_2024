@@ -12,6 +12,15 @@ export default function PlanningPage({ onResultats }) {
   const [modalEmploye, setModalEmploye] = useState(null)
   const [error, setError]           = useState("")
 
+  const reloadPersonnel = () =>
+    fetchPersonnel()
+      .then(data => {
+        setPersonnel(data)
+        // Mettre à jour modalEmploye avec les nouvelles données s'il est ouvert
+        setModalEmploye(prev => prev ? (data.find(e => e.id === prev.id) ?? prev) : null)
+      })
+      .catch(() => {})
+
   useEffect(() => {
     fetchPersonnel()
       .then(data => setPersonnel(data))
@@ -145,6 +154,7 @@ export default function PlanningPage({ onResultats }) {
         <EmployeModal
           employe={modalEmploye}
           onValider={validerConfig}
+          onTemplateSaved={reloadPersonnel}
           onClose={() => setModalEmploye(null)}
         />
       )}

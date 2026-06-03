@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { updateTemplate } from "../../utils/api"
 
-export default function EmployeModal({ employe, onValider, onClose }) {
+export default function EmployeModal({ employe, onValider, onTemplateSaved, onClose }) {
   const contrat = employe.contrat || ""
 
   // Horaires stockés localement pour être mis à jour après chaque save
@@ -57,6 +57,7 @@ export default function EmployeModal({ employe, onValider, onClose }) {
       setHoraires(nouvellesHoraires)
       setSaveOk(true)
       setTimeout(() => setSaveOk(false), 2000)
+      if (onTemplateSaved) onTemplateSaved()
     } catch (e) { alert(e.message) }
     setSavingTemplate(false)
   }
